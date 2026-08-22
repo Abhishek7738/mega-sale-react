@@ -1,0 +1,25 @@
+<svg width="180" height="60" viewBox="0 0 180 60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0066cc"></stop>
+      <stop offset="100%" stop-color="#174ea6"></stop>
+    </linearGradient>
+
+    <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff8a00"></stop>
+      <stop offset="100%" stop-color="#ff3d00"></stop>
+    </linearGradient>
+  </defs>
+
+  <!-- MEGSALE text -->
+  <text x="10" y="35" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" font-style="italic" fill="url(#blueGradient)">
+    MEG
+  </text>
+
+  <text x="72" y="35" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" font-style="italic" fill="#e91e63">
+    SALE
+  </text>
+
+  <!-- Orange curved swoosh -->
+  <path d="M25 42 C55 55, 105 54, 145 39" fill="none" stroke="url(#orangeGradient)" stroke-width="5" stroke-linecap="round"></path>
+</svg>
