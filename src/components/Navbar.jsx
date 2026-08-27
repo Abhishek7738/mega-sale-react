@@ -31,7 +31,7 @@ function Navbar() {
   );
 
   return (
-    <nav className="relative z-50 w-full border-b border-gray-100 bg-white">
+    <nav className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white shadow-sm">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:flex-nowrap lg:px-8">
         {/* Logo */}
         <div className="w-32 shrink-0 sm:w-36">
