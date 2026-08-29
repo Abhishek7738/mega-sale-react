@@ -45,21 +45,25 @@ function Categories() {
 
           <div className="flex gap-3">
             <button
-              onClick={() => setCurrentIndex((prev) => prev - 1)}
-              disabled={currentIndex === 0}
+              onClick={() => setCurrentIndex((prev) =>
+                prev === 0 ? categories.length - visibleCards : prev - 1
+   ) }
+             
               className="w-10 h-10 flex items-center justify-center
-                         bg-gray-200 rounded-lg
-                         disabled:opacity-40"
+                         bg-blue-600 text-white rounded-lg
+                         "
             >
               ←
             </button>
 
             <button
-              onClick={() => setCurrentIndex((prev) => prev + 1)}
-              disabled={currentIndex >= categories.length - visibleCards}
+              onClick={() => setCurrentIndex((prev) =>
+                prev >= categories.length - visibleCards ? 0 : prev + 1
+   ) }
+             
               className="w-10 h-10 flex items-center justify-center
                          bg-blue-600 text-white rounded-lg
-                         disabled:opacity-40"
+                         "
             >
               →
             </button>
@@ -97,7 +101,8 @@ function Categories() {
                              bg-blue-600 text-white px-4 py-2
                              rounded-lg transition-all duration-300
                              ease-in-out
-                             group-hover:bottom-4"
+                             group-hover:bottom-4
+                             group-hover:opacity-100"
               >
                 Shop Now →
               </button>
