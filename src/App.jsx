@@ -3,7 +3,8 @@ import TopBar from "./components/TopBar";
 import Hero from "./components/Hero";
 import PromoSection from "./components/PromoSection";
 import Categories from "./components/Categories";
-import ProductCard from "./components/ProductCard";
+import ProductSection from "./components/ProductSection";
+import OfferSection from "./components/OfferSection";
 function App() {
   return (
     <div>
@@ -12,7 +13,9 @@ function App() {
       <Hero />
       <PromoSection />
       <Categories />
-      <ProductCard/>
+      <ProductSection/>
+      <OfferSection/>
+     
     </div>
   );
 }
