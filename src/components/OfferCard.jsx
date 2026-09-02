@@ -1,24 +1,36 @@
-import React from "react";
+import React, { useState } from "react";
+
+const hoverColor = {
+  orange: "bg-[#ffb52e]",
+  blue: "bg-[#1689e8]",
+  red: "bg-[#ff4b4b]",
+};
 
 const OfferCard = ({ offer }) => {
-  const hoverColor = {
-    orange: "bg-[#ffb52e]",
-    blue: "bg-[#1689e8]",
-    red: "bg-[#ff4b4b]",
-  };
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      className={`group w-full overflow-hidden rounded-[15px] ${
+      className={`w-full overflow-hidden rounded-[15px] ${
         offer.hoverEffect ? "cursor-pointer" : ""
       }`}
+      onMouseEnter={() => {
+        if (offer.hoverEffect) {
+          setIsHovered(true);
+        }
+      }}
+      onMouseLeave={() => {
+        if (offer.hoverEffect) {
+          setIsHovered(false);
+        }
+      }}
     >
       {/* Offer Image */}
-      <div className="w-full overflow-hidden">
+      <div className="h-48 w-full overflow-hidden">
         <img
           src={offer.image}
           alt={offer.discount}
-          className="block w-full object-cover"
+          className="block h-full w-full object-contain"
         />
       </div>
 
@@ -28,16 +40,19 @@ const OfferCard = ({ offer }) => {
           flex min-h-[64px] items-center justify-between
           px-5
           ${
-            offer.theme === "orange" &&
-            "bg-gradient-to-r from-[#ffab1f] to-[#ff5545]"
+            offer.theme === "orange"
+              ? "bg-gradient-to-r from-[#ffab1f] to-[#ff5545]"
+              : ""
           }
           ${
-            offer.theme === "blue" &&
-            "bg-gradient-to-r from-[#2399e9] to-[#45aef5]"
+            offer.theme === "blue"
+              ? "bg-gradient-to-r from-[#2399e9] to-[#45aef5]"
+              : ""
           }
           ${
-            offer.theme === "red" &&
-            "bg-gradient-to-r from-[#c90035] to-[#ff4c4c]"
+            offer.theme === "red"
+              ? "bg-gradient-to-r from-[#c90035] to-[#ff4c4c]"
+              : ""
           }
         `}
       >
@@ -54,6 +69,7 @@ const OfferCard = ({ offer }) => {
           type="button"
           className="
             relative
+            isolate
             overflow-hidden
             rounded-[7px]
             bg-white/15
@@ -64,19 +80,24 @@ const OfferCard = ({ offer }) => {
             text-white
           "
         >
-          {/* Hover Color Layer */}
+          {/* Hover Fill */}
           {offer.hoverEffect && (
             <span
               className={`
+                pointer-events-none
                 absolute
                 inset-0
+                z-0
                 origin-top
-                scale-y-0
+                ${hoverColor[offer.theme]}
                 transition-transform
                 duration-300
                 ease-out
-                group-hover:scale-y-100
-                ${hoverColor[offer.theme]}
+                ${
+                  isHovered
+                    ? "translate-y-0"
+                    : "-translate-y-full"
+                }
               `}
             />
           )}
