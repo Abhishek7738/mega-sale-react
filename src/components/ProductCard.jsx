@@ -1,6 +1,6 @@
 function ProductCard({ name, weight, price, oldPrice, image, featured }) {
   return (
-    <div className="group w-[210px] overflow-hidden rounded-xl bg-white shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+    <div className="group w-full overflow-hidden rounded-xl bg-white shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       {/* Product Image */}
       <div className="relative flex h-[145px] items-center justify-center bg-white">
         {/* Featured Badge */}
