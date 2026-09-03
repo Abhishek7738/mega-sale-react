@@ -7,6 +7,8 @@ import ProductSection from "./components/ProductSection";
 import OfferSection from "./components/OfferSection";
 import TopSellingSection from "./components/TopSellingSection";
 import BannerSection from "./components/BannerSection";
+import BreakfastDairySection from "./components/BreakfastDairySection";
+
 function App() {
   return (
     <div>
@@ -15,11 +17,11 @@ function App() {
       <Hero />
       <PromoSection />
       <Categories />
-      <ProductSection/>
-      <OfferSection/>
+      <ProductSection />
+      <OfferSection />
       <TopSellingSection />
       <BannerSection />
-     
+      <BreakfastDairySection/>
     </div>
   );
 }
