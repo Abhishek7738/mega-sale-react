@@ -147,7 +147,7 @@ function BannerSection() {
               <img
                 src={banner.image}
                 alt={banner.alt}
-                className="block h-auto w-full"
+                className="block h-60 w-full"
               />
             </div>
           ))}
