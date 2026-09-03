@@ -30,6 +30,7 @@ const banners = [
 ];
 
 function BannerSection() {
+  // Clone the last and first banner for a seamless infinite carousel
   const carouselBanners = [
     banners[banners.length - 1],
     ...banners,
@@ -38,17 +39,38 @@ function BannerSection() {
 
   const [currentIndex, setCurrentIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(true);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  // Preload all banner images before showing the carousel
+  useEffect(() => {
+    const imagePromises = banners.map((banner) => {
+      return new Promise((resolve) => {
+        const image = new Image();
+
+        image.onload = resolve;
+        image.onerror = resolve;
+
+        image.src = banner.image;
+      });
+    });
+
+    Promise.all(imagePromises).then(() => {
+      setImagesLoaded(true);
+    });
+  }, []);
 
   // Auto-slide every 3 seconds
   useEffect(() => {
+    if (!imagesLoaded) return;
+
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => prevIndex + 1);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [imagesLoaded]);
 
-  // Reset after the cloned first banner
+  // Reset after reaching the cloned first banner
   const handleTransitionEnd = () => {
     if (currentIndex === carouselBanners.length - 1) {
       setIsTransitioning(false);
@@ -62,16 +84,27 @@ function BannerSection() {
     }
   };
 
-  // Active dot
+  // Calculate which real banner is active
   const activeIndex =
     currentIndex === carouselBanners.length - 1
       ? 0
       : currentIndex - 1;
 
+  // Loading placeholder
+  if (!imagesLoaded) {
+    return (
+      <section className="w-full py-12">
+        <div className="mx-auto w-[90%] max-w-6xl">
+          <div className="aspect-[3/1] w-full rounded-xl bg-gray-100" />
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="w-full pt-2 py-6">
-      {/* <div className="mx-auto w-[90%] max-w-5xl overflow-hidden rounded-xl sm:w-[80%] lg:w-[70%]"> */}
+    <section className="w-full py-12">
       <div className="mx-auto w-[90%] max-w-6xl overflow-hidden rounded-xl">
+        {/* Banner carousel */}
         <div
           className={`flex ${
             isTransitioning
@@ -79,7 +112,7 @@ function BannerSection() {
               : ""
           }`}
           style={{
-         transform: `translateX(-${currentIndex * 100}%)`,
+            transform: `translateX(-${currentIndex * 100}%)`,
           }}
           onTransitionEnd={handleTransitionEnd}
         >
@@ -91,14 +124,15 @@ function BannerSection() {
               <img
                 src={banner.image}
                 alt={banner.alt}
-                className="block aspect-[3/1] h-auto w-full object-cover"
+                className="block h-auto w-full"
               />
             </div>
           ))}
         </div>
       </div>
 
-      <div className="mt-3 flex justify-center gap-2">
+      {/* Slider dots */}
+      <div className="mt-4 flex justify-center gap-2">
         {banners.map((banner, index) => (
           <span
             key={banner.id}
