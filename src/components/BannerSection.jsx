@@ -30,7 +30,8 @@ const banners = [
 ];
 
 function BannerSection() {
-  // Clone the last and first banner for a seamless infinite carousel
+  // Clone last banner at beginning
+  // and first banner at the end
   const carouselBanners = [
     banners[banners.length - 1],
     ...banners,
@@ -39,38 +40,64 @@ function BannerSection() {
 
   const [currentIndex, setCurrentIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(true);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Preload all banner images before showing the carousel
+  const slideWidth = 100 / carouselBanners.length;
+
+  // Auto slide
   useEffect(() => {
-    const imagePromises = banners.map((banner) => {
-      return new Promise((resolve) => {
-        const image = new Image();
-
-        image.onload = resolve;
-        image.onerror = resolve;
-
-        image.src = banner.image;
-      });
-    });
-
-    Promise.all(imagePromises).then(() => {
-      setImagesLoaded(true);
-    });
-  }, []);
-
-  // Auto-slide every 3 seconds
-  useEffect(() => {
-    if (!imagesLoaded) return;
-
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => prevIndex + 1);
+      // Do nothing while browser tab is hidden
+      if (document.hidden) {
+        return;
+      }
+
+      setCurrentIndex((prevIndex) => {
+        // Never allow the index to go beyond
+        // the cloned first banner
+        if (prevIndex >= carouselBanners.length - 1) {
+          return 1;
+        }
+
+        return prevIndex + 1;
+      });
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [imagesLoaded]);
+  }, [carouselBanners.length]);
 
-  // Reset after reaching the cloned first banner
+  // Handle tab switching
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // When coming back to the tab,
+        // make sure the carousel is in a valid position
+        setCurrentIndex((prevIndex) => {
+          if (
+            prevIndex < 1 ||
+            prevIndex > carouselBanners.length - 1
+          ) {
+            return 1;
+          }
+
+          return prevIndex;
+        });
+      }
+    };
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    return () => {
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+    };
+  }, [carouselBanners.length]);
+
+  // Infinite loop reset
   const handleTransitionEnd = () => {
     if (currentIndex === carouselBanners.length - 1) {
       setIsTransitioning(false);
@@ -84,27 +111,17 @@ function BannerSection() {
     }
   };
 
-  // Calculate which real banner is active
+  // Active dot
   const activeIndex =
     currentIndex === carouselBanners.length - 1
       ? 0
       : currentIndex - 1;
 
-  // Loading placeholder
-  if (!imagesLoaded) {
-    return (
-      <section className="w-full py-12">
-        <div className="mx-auto w-[90%] max-w-6xl">
-          <div className="aspect-[3/1] w-full rounded-xl bg-gray-100" />
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section className="w-full py-12">
+      {/* Banner viewport */}
       <div className="mx-auto w-[90%] max-w-6xl overflow-hidden rounded-xl">
-        {/* Banner carousel */}
+        {/* Carousel track */}
         <div
           className={`flex ${
             isTransitioning
@@ -112,14 +129,20 @@ function BannerSection() {
               : ""
           }`}
           style={{
-            transform: `translateX(-${currentIndex * 100}%)`,
+            width: `${carouselBanners.length * 100}%`,
+            transform: `translateX(-${
+              currentIndex * slideWidth
+            }%)`,
           }}
           onTransitionEnd={handleTransitionEnd}
         >
           {carouselBanners.map((banner, index) => (
             <div
               key={`${banner.id}-${index}`}
-              className="w-full shrink-0"
+              className="shrink-0"
+              style={{
+                width: `${slideWidth}%`,
+              }}
             >
               <img
                 src={banner.image}
@@ -131,7 +154,7 @@ function BannerSection() {
         </div>
       </div>
 
-      {/* Slider dots */}
+      {/* Dots */}
       <div className="mt-4 flex justify-center gap-2">
         {banners.map((banner, index) => (
           <span
