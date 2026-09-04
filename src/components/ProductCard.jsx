@@ -1,6 +1,6 @@
 function ProductCard({ name, weight, price, oldPrice, image, featured }) {
   return (
-    <div className="group w-full overflow-hidden rounded-xl bg-white shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+    <div className="group flex h-full w-full flex-col overflow-hidden rounded-xl bg-white shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       {/* Product Image */}
       <div className="relative flex h-[145px] items-center justify-center bg-white">
         {/* Featured Badge */}
@@ -46,7 +46,7 @@ function ProductCard({ name, weight, price, oldPrice, image, featured }) {
       </div>
 
       {/* Product Information */}
-      <div className="px-3 pb-3">
+      <div className="flex flex-1 flex-col px-3 pb-3">
         {/* Product Name */}
         <h3 className="truncate text-[15px] font-semibold text-gray-900">
           {name}
@@ -80,7 +80,7 @@ function ProductCard({ name, weight, price, oldPrice, image, featured }) {
         </div>
 
         {/* Add */}
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-auto flex items-center justify-between">
           <span className="text-xs text-gray-700">Add</span>
 
           <button
