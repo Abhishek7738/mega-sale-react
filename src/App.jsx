@@ -11,6 +11,7 @@ import BreakfastDairySection from "./components/BreakfastDairySection";
 import FreshFruitsSection from "./components/FreshFruitsSection";
 import PromoBannersSection from "./components/PromoBannersSection";
 import OrganicVegetablesSection from "./components/OrganicVegetablesSection";
+import BestSellersSection from "./components/BestSellersSection";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
       <FreshFruitsSection/>
       <PromoBannersSection/>
       <OrganicVegetablesSection/>
+      <BestSellersSection/>
     </div>
   );
 }
