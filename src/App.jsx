@@ -14,6 +14,7 @@ import OrganicVegetablesSection from "./components/OrganicVegetablesSection";
 import BestSellersSection from "./components/BestSellersSection";
 import DeliveryBannersSection from "./components/DeliveryBannersSection";
 import TrendingProductsSection from "./components/TrendingProductsSection";
+import NewArrivalsSection from "./components/NewArrivalsSection";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
       <BestSellersSection/>
       <DeliveryBannersSection />
       <TrendingProductsSection/>
+      <NewArrivalsSection/>
     </div>
   );
 }
