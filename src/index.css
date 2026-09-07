@@ -1,4 +1,5 @@
 @import "tailwindcss";
+
 @keyframes marquee {
   from {
     transform: translateX(100vw);
@@ -7,4 +8,31 @@
   to {
     transform: translateX(-100%);
   }
+}
+
+@keyframes deliveryFlash {
+  0% {
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.45;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.delivery-hover-flash {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: white;
+  opacity: 0;
+}
+
+.delivery-banner:hover .delivery-hover-flash {
+  animation: deliveryFlash 0.8s ease-in-out 1;
 }
