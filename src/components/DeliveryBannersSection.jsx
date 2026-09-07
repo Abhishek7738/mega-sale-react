@@ -64,42 +64,7 @@ function DeliveryBannersSection() {
               {banner.showButton && (
                 <a
                   href={banner.buttonLink}
-                  className="
-      absolute
-      left-[73%]
-      top-[86%]
-      z-20
-      -translate-x-1/2
-      -translate-y-1/2
-      inline-flex
-      items-center
-      gap-1
-      rounded-md
-      bg-[#28a6a2]
-      px-4
-      py-1.5
-      text-[9px]
-      font-medium
-      leading-none
-      text-white
-      shadow-sm
-      transition-colors
-      duration-300
-      hover:bg-[#208f8c]
-
-      sm:left-[70%]
-      sm:top-[84%]
-      sm:px-4
-      sm:py-1.5
-      sm:text-[10px]
-
-      lg:left-[62%]
-      lg:top-[82%]
-      lg:gap-2
-      lg:px-5
-      lg:py-2
-      lg:text-xs
-    "
+                  className="absolute left-[73%] top-[86%] z-20 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-md bg-[#28a6a2] px-4 py-1.5 text-[9px] font-medium leading-none text-white shadow-sm transition-colors duration-300 hover:bg-[#208f8c] sm:left-[70%] sm:top-[84%] sm:px-4 sm:py-1.5 sm:text-[10px] lg:left-[62%] lg:top-[82%] lg:gap-2 lg:px-5 lg:py-2 lg:text-xs"
                 >
                   {banner.buttonText}
 

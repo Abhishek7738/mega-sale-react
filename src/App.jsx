@@ -13,6 +13,7 @@ import PromoBannersSection from "./components/PromoBannersSection";
 import OrganicVegetablesSection from "./components/OrganicVegetablesSection";
 import BestSellersSection from "./components/BestSellersSection";
 import DeliveryBannersSection from "./components/DeliveryBannersSection";
+import TrendingProductsSection from "./components/TrendingProductsSection";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
       <OrganicVegetablesSection/>
       <BestSellersSection/>
       <DeliveryBannersSection />
+      <TrendingProductsSection/>
     </div>
   );
 }
