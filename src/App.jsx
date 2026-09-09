@@ -16,6 +16,8 @@ import DeliveryBannersSection from "./components/DeliveryBannersSection";
 import TrendingProductsSection from "./components/TrendingProductsSection";
 import NewArrivalsSection from "./components/NewArrivalsSection";
 import FeaturedBlogSection from "./components/FeaturedBlogSection";
+import FooterSection from "./components/FooterSection";
+import BackToTopButton from "./components/BackToTopButton";
 
 function App() {
   return (
@@ -38,6 +40,8 @@ function App() {
       <TrendingProductsSection/>
       <NewArrivalsSection/>
       <FeaturedBlogSection />
+      <FooterSection/>
+      <BackToTopButton/>
     </div>
   );
 }
