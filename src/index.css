@@ -36,3 +36,48 @@
 .delivery-banner:hover .delivery-hover-flash {
   animation: deliveryFlash 0.8s ease-in-out 1;
 }
+.promo-hover-flash {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: white;
+  opacity: 0;
+}
+
+.promo-banner:hover .promo-hover-flash {
+  animation: promoFlash 0.8s ease-in-out 1;
+}
+
+@keyframes promoFlash {
+  0% {
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.45;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+.promo-carousel-track {
+  transform: translateX(
+    calc(-1 * var(--promo-index) * (84vw + 20px))
+  );
+}
+
+@media (min-width: 768px) {
+  .promo-carousel-track {
+    transform: translateX(
+      calc(-1 * var(--promo-index) * (42vw + 10px))
+    );
+  }
+}
+
+@media (min-width: 1024px) {
+  .promo-carousel-track {
+    transform: none;
+  }
+}

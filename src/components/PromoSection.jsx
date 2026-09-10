@@ -1,77 +1,104 @@
+import { useEffect, useState } from "react";
+
+const promoBanners = [
+  {
+    id: 1,
+    image: "/icecream.avif",
+    title: "Summer Ice Cream",
+  },
+  {
+    id: 2,
+    image: "/fruitjuice.webp",
+    title: "Fresh Fruit Juice",
+  },
+  {
+    id: 3,
+    image: "/freshfruit.webp",
+    title: "Fresh Fruit",
+  },
+  {
+    id: 4,
+    image: "/healthyfood.avif",
+    title: "Eat Healthy Be Healthy",
+  },
+];
+
 function PromoSection() {
+  const carouselBanners = [
+    promoBanners[promoBanners.length - 1],
+    ...promoBanners,
+    promoBanners[0],
+  ];
+
+  const [currentIndex, setCurrentIndex] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((current) => current + 1);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (currentIndex === carouselBanners.length - 1) {
+      const timer = setTimeout(() => {
+        setIsTransitioning(false);
+        setCurrentIndex(1);
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setIsTransitioning(true);
+          });
+        });
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, carouselBanners.length]);
+
   return (
     <section className="w-full py-[60px] px-[8%]">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[20px]">
+      <div className="overflow-hidden">
         <div
-          className="h-[150px] md:h-[160px] lg:h-[150px] rounded-[10px] bg-cover bg-center relative shadow-sm transition-transform duration-300 hover:scale-[1.02]"
-          style={{ backgroundImage: "url('/icecream.avif')" }}
+          className={`promo-carousel-track flex gap-[20px] ${
+            isTransitioning
+              ? "transition-transform duration-700 ease-in-out"
+              : ""
+          } lg:grid lg:grid-cols-4`}
+          style={{
+            "--promo-index": currentIndex,
+          }}
         >
-          <div className="absolute inset-0 bg-black/30 hover:bg-black/40 transition-colors duration-300 flex flex-col justify-center px-[20px] py-[15px]">
-            <h2 className="text-[18px] font-semibold text-white">
-              Summer Ice Cream
-            </h2>
-            <a
-              href="#"
-              className="inline-block bg-[#0787df] text-white text-[14px] font-semibold px-[12px] py-[6px] rounded-[5px] mt-[10px] w-fit hover:bg-[#056bb5] transition-colors duration-300"
+          {carouselBanners.map((banner, index) => (
+            <div
+              key={`${banner.id}-${index}`}
+            className="promo-banner relative h-[150px] w-full shrink-0 rounded-[10px] bg-cover bg-center shadow-sm md:h-[160px] md:w-[calc(50%-10px)] lg:w-auto first:lg:hidden last:lg:hidden"
+              style={{
+                backgroundImage: `url('${banner.image}')`,
+              }}
             >
-              Shop Now
-            </a>
-          </div>
-        </div>
+              <div className="absolute inset-0 flex flex-col justify-center bg-black/30 px-[20px] py-[15px]">
+                <h2 className="text-[18px] font-semibold text-white">
+                  {banner.title}
+                </h2>
 
-        <div
-          className="h-[150px] md:h-[160px] lg:h-[150px] rounded-[10px] bg-cover bg-center relative shadow-sm transition-transform duration-300 hover:scale-[1.02]"
-          style={{ backgroundImage: "url('/fruitjuice.webp')" }}
-        >
-          <div className="absolute inset-0 bg-black/30 hover:bg-black/40 transition-colors duration-300 flex flex-col justify-center px-[20px] py-[15px]">
-            <h2 className="text-[18px] font-semibold text-white">
-              Fresh Fruit Juice
-            </h2>
+                <a
+                  href="#"
+                  className="mt-[10px] inline-block w-fit rounded-[5px] bg-[#0787df] px-[12px] py-[6px] text-[14px] font-semibold text-white transition-colors duration-300 hover:bg-[#056bb5]"
+                >
+                  Shop Now
+                </a>
 
-            <a
-              href="#"
-              className="inline-block bg-[#0787df] text-white text-[14px] font-semibold px-[12px] py-[6px] rounded-[5px] mt-[10px] w-fit hover:bg-[#056bb5] transition-colors duration-300"
-            >
-              Shop Now
-            </a>
-          </div>
-        </div>
-        <div
-          className="h-[150px] md:h-[160px] lg:h-[150px] rounded-[10px] bg-cover bg-center relative shadow-sm transition-transform duration-300 hover:scale-[1.02]"
-          style={{ backgroundImage: "url('/freshfruit.webp')" }}
-        >
-          <div className="absolute inset-0 bg-black/30 hover:bg-black/40 transition-colors duration-300 flex flex-col justify-center px-[20px] py-[15px]">
-            <h2 className="text-[18px] font-semibold text-white">
-              Fresh Fruit
-            </h2>
-
-            <a
-              href="#"
-              className="inline-block bg-[#0787df] text-white text-[14px] font-semibold px-[12px] py-[6px] rounded-[5px] mt-[10px] w-fit hover:bg-[#056bb5] transition-colors duration-300"
-            >
-              Shop Now
-            </a>
-          </div>
-        </div>
-        <div
-          className="h-[150px] md:h-[160px] lg:h-[150px] rounded-[10px] bg-cover bg-center relative shadow-sm transition-transform duration-300 hover:scale-[1.02]"
-          style={{ backgroundImage: "url('/healthyfood.avif')" }}
-        >
-          <div className="absolute inset-0 bg-black/30 hover:bg-black/40 transition-colors duration-300 flex flex-col justify-center px-[20px] py-[15px]">
-            <h2 className="text-[18px] font-semibold text-white">
-              Eat Healthy Be Healthy
-            </h2>
-
-            <a
-              href="#"
-              className="inline-block bg-[#0787df] text-white text-[14px] font-semibold px-[12px] py-[6px] rounded-[5px] mt-[10px] w-fit hover:bg-[#056bb5] transition-colors duration-300"
-            >
-              Shop Now
-            </a>
-          </div>
+                <span className="promo-hover-flash" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
+
 export default PromoSection;
