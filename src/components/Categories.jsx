@@ -1,342 +1,247 @@
 import { useEffect, useState } from "react";
 
-function Categories() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [visibleCards, setVisibleCards] = useState(6);
+const categories = [
+  {
+    name: "Electronics",
+    image: "/Electronics1.png",
+  },
+  {
+    name: "Sports",
+    image: "/Sports1.png",
+  },
+  {
+    name: "Accessorise",
+    image: "/Accessorise1.jpg",
+  },
+  {
+    name: "Fashion",
+    image: "/Fashion1.png",
+  },
+  {
+    name: "Beauty",
+    image: "/Beauty.png",
+  },
+  {
+    name: "Grocery & Food",
+    image: "/Grocery & Food1.png",
+  },
+  {
+    name: "Beverages",
+    image: "/Beverages1.png",
+  },
+  {
+    name: "Vegetables & Fruits",
+    image: "/Vegetables & Fruits1.png",
+  },
+];
 
-  // ==============================
-  // CATEGORY DATA
-  // ==============================
-  const categories = [
-    {
-      name: "Electronics",
-      items: 0,
-      image: "/Electronics.jpg",
-    },
-    {
-      name: "Sports",
-      items: 0,
-      image: "/Sports.jpg",
-    },
-    {
-      name: "Accessorise",
-      items: 0,
-      image: "/Accessorise.jpg",
-    },
-    {
-      name: "Fashion",
-      items: 0,
-      image: "/Fashion.jpg",
-    },
-    {
-      name: "Beauty",
-      items: 0,
-      image: "/Beauty.jpg",
-    },
-    {
-      name: "Grocery & Food",
-      items: 8,
-      image: "/Grocery & Foods.jpg",
-    },
-    {
-      name: "Beverages",
-      items: 1,
-      image: "/Beverages.jpg",
-    },
-    {
-      name: "Vegetables & Fruits",
-      items: 8,
-      image: "/Vegetables & Fruit.jpg",
-    },
+const getVisibleCards = () => {
+  if (typeof window === "undefined") return 6;
+
+  if (window.innerWidth < 640) return 2;
+  if (window.innerWidth < 1024) return 4;
+
+  return 6;
+};
+
+const Categories = () => {
+  const [visibleCards, setVisibleCards] = useState(() =>
+    getVisibleCards()
+  );
+
+  const [currentIndex, setCurrentIndex] = useState(categories.length);
+
+  const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
+
+  /*
+    Three copies of categories:
+
+    Copy 1: 1 to 8
+    Copy 2: 1 to 8
+    Copy 3: 1 to 8
+  */
+  const clonedCategories = [
+    ...categories,
+    ...categories,
+    ...categories,
   ];
 
-  // ==============================
-  // RESPONSIVE VISIBLE CARDS
-  // ==============================
+  /*
+    Responsive cards:
+    Mobile  = 2
+    Tablet  = 4
+    Desktop = 6
+  */
   useEffect(() => {
-    const updateVisibleCards = () => {
-      if (window.innerWidth < 640) {
-        setVisibleCards(2);
-      } else if (window.innerWidth < 768) {
-        setVisibleCards(3);
-      } else if (window.innerWidth < 1024) {
-        setVisibleCards(4);
-      } else {
-        setVisibleCards(6);
-      }
+    const handleResize = () => {
+      const newVisibleCards = getVisibleCards();
+
+      setVisibleCards((previousVisibleCards) => {
+        if (previousVisibleCards !== newVisibleCards) {
+          setIsTransitionEnabled(false);
+          setCurrentIndex(categories.length);
+
+          return newVisibleCards;
+        }
+
+        return previousVisibleCards;
+      });
     };
 
-    updateVisibleCards();
-
-    window.addEventListener("resize", updateVisibleCards);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", updateVisibleCards);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
-  // ==============================
-  // RESET INDEX AFTER RESIZE
-  // ==============================
+  /*
+    Enable transition again after silent reset
+  */
   useEffect(() => {
-    const maxIndex = Math.max(
-      categories.length - visibleCards,
-      0
-    );
+    if (!isTransitionEnabled) {
+      const frame = requestAnimationFrame(() => {
+        setIsTransitionEnabled(true);
+      });
 
-    if (currentIndex > maxIndex) {
-      setCurrentIndex(0);
+      return () => cancelAnimationFrame(frame);
     }
-  }, [visibleCards, currentIndex, categories.length]);
+  }, [isTransitionEnabled]);
 
-  // ==============================
-  // PREVIOUS BUTTON
-  // ==============================
-  const handlePrevious = () => {
-    const maxIndex = Math.max(
-      categories.length - visibleCards,
-      0
-    );
-
-    setCurrentIndex((prev) => {
-      if (prev === 0) {
-        return maxIndex;
-      }
-
-      return prev - 1;
-    });
-  };
-
-  // ==============================
-  // NEXT BUTTON
-  // ==============================
+  /*
+    Move one card forward safely
+  */
   const handleNext = () => {
-    const maxIndex = Math.max(
-      categories.length - visibleCards,
-      0
-    );
+    if (currentIndex >= categories.length * 2) return;
 
-    setCurrentIndex((prev) => {
-      if (prev >= maxIndex) {
-        return 0;
-      }
-
-      return prev + 1;
-    });
+    setCurrentIndex((previousIndex) => previousIndex + 1);
   };
 
-  const visibleCategories = categories.slice(
-    currentIndex,
-    currentIndex + visibleCards
-  );
+  /*
+    Move one card backward safely
+  */
+  const handlePrev = () => {
+    if (currentIndex <= 0) return;
+
+    setCurrentIndex((previousIndex) => previousIndex - 1);
+  };
+
+  /*
+    Infinite carousel reset
+  */
+  const handleTransitionEnd = () => {
+    /*
+      Third copy reached:
+      Jump silently to second copy
+    */
+    if (currentIndex >= categories.length * 2) {
+      setIsTransitionEnabled(false);
+      setCurrentIndex(categories.length);
+    }
+
+    /*
+      First copy reached:
+      Jump silently to second copy
+    */
+    if (currentIndex <= 0) {
+      setIsTransitionEnabled(false);
+      setCurrentIndex(categories.length);
+    }
+  };
 
   return (
-    <section className="w-full py-6 sm:py-8 lg:py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="w-full py-8">
+      {/* Section Container */}
+      <div className="mx-auto w-full max-w-[1168px] px-4">
+        {/* Section Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Shop By Categories
+            </h2>
 
-        {/* ==============================
-            SECTION HEADER
-        ============================== */}
-        <div className="flex items-center justify-between mb-5 sm:mb-6">
+            <div className="mt-2 h-1 w-20 rounded-full bg-blue-600" />
+          </div>
 
-          <h2 className="text-xl sm:text-2xl font-bold text-[#263238]">
-            Shop By Categories
-          </h2>
-
-          {/* ==============================
-              NAVIGATION BUTTONS
-          ============================== */}
-          <div className="flex items-center gap-2 sm:gap-3">
-
+          {/* Navigation Buttons */}
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={handlePrevious}
+              onClick={handlePrev}
               aria-label="Previous categories"
-              className="
-                w-9 h-9
-                sm:w-10 sm:h-10
-                flex items-center justify-center
-                rounded-lg
-                bg-[#0878df]
-                text-white
-                text-lg
-                hover:bg-[#056bb5]
-                active:scale-95
-                transition-all duration-200
-              "
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-blue-600 shadow-md transition duration-300 hover:bg-blue-600 hover:text-white"
             >
-              ←
+              <i className="fa-solid fa-chevron-left text-sm" />
             </button>
 
             <button
               type="button"
               onClick={handleNext}
               aria-label="Next categories"
-              className="
-                w-9 h-9
-                sm:w-10 sm:h-10
-                flex items-center justify-center
-                rounded-lg
-                bg-[#0878df]
-                text-white
-                text-lg
-                hover:bg-[#056bb5]
-                active:scale-95
-                transition-all duration-200
-              "
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-md transition duration-300 hover:bg-white hover:text-blue-600"
             >
-              →
+              <i className="fa-solid fa-chevron-right text-sm" />
             </button>
-
           </div>
         </div>
 
-        {/* ==============================
-            CATEGORY CARDS
-        ============================== */}
-        <div
-          className="
-            grid
-            grid-cols-2
-            sm:grid-cols-3
-            md:grid-cols-4
-            lg:grid-cols-6
-            gap-3
-            sm:gap-4
-            lg:gap-5
-            overflow-hidden
-          "
-        >
-          {visibleCategories.map((category) => (
-            <div
-              key={category.name}
-              className="
-                group
-                relative
-                h-[155px]
-                sm:h-[180px]
-                lg:h-[200px]
-                bg-[#f3f4f6]
-                hover:bg-[#dff5f2]
-                rounded-xl
-                p-4
-                overflow-hidden
-                transition-all
-                duration-300
-              "
-            >
-
-              {/* ==============================
-                  CATEGORY TEXT
-              ============================== */}
-              <div className="relative z-20">
-
-                <h3
-                  className="
-                    text-[15px]
-                    sm:text-[16px]
-                    font-bold
-                    leading-5
-                    text-[#263238]
-                  "
-                >
-                  {category.name}
-                </h3>
-
-                <p
-                  className="
-                    text-xs
-                    sm:text-sm
-                    text-gray-500
-                    mt-1
-                  "
-                >
-                  {category.items} items
-                </p>
-
-              </div>
-
-              {/* ==============================
-                  CATEGORY IMAGE
-              ============================== */}
+        {/* Carousel Viewport */}
+        <div className="w-full overflow-hidden">
+          {/* Carousel Track */}
+          <div
+            onTransitionEnd={handleTransitionEnd}
+            className={`flex ${
+              isTransitionEnabled
+                ? "transition-transform duration-300 ease-out"
+                : ""
+            }`}
+            style={{
+              width: `${(clonedCategories.length / visibleCards) * 100}%`,
+              transform: `translate3d(-${
+                (currentIndex * 100) / clonedCategories.length
+              }%, 0, 0)`,
+            }}
+          >
+            {clonedCategories.map((category, index) => (
               <div
-                className="
-                  absolute
-                  left-3
-                  right-3
-                  bottom-3
-                  h-[115px]
-                  flex
-                  items-center
-                  justify-center
-                  z-10
-                  transition-all
-                  duration-500
-                  ease-out
-                  group-hover:-translate-y-4
-                "
+                key={`${category.name}-${index}`}
+                className="shrink-0 px-1.5 sm:px-2"
+                style={{
+                  width: `${100 / clonedCategories.length}%`,
+                  flex: `0 0 ${100 / clonedCategories.length}%`,
+                }}
               >
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  loading="lazy"
-                  className="
-                    max-w-[90%]
-                    max-h-[110px]
-                    object-contain
-                    mix-blend-multiply
-                    transition-transform
-                    duration-500
-                    ease-out
-                  "
-                />
+                {/* Category Card */}
+                <div className="group relative h-[220px] overflow-hidden rounded-xl bg-white p-4 shadow-md transition duration-300 hover:bg-[#dff5f2]">
+                  {/* Category Image */}
+                  <div className="flex h-[130px] items-center justify-center transition duration-300 group-hover:-translate-y-3">
+                    <img
+                      src={category.image}
+                      alt={category.name}
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+
+                  {/* Category Name */}
+                  <h3 className="mt-4 text-center text-base font-semibold text-gray-800 transition-opacity duration-200 group-hover:opacity-0">
+                    {category.name}
+                  </h3>
+
+                  {/* Shop Now Button */}
+                  <button
+                    type="button"
+                    className="absolute bottom-[-45px] left-1/2 z-20 min-w-[105px] -translate-x-1/2 whitespace-nowrap rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white opacity-0 shadow-md transition-all duration-300 group-hover:bottom-4 group-hover:opacity-100"
+                  >
+                    Shop Now
+                  </button>
+                </div>
               </div>
-
-              {/* ==============================
-                  SHOP NOW BUTTON
-              ============================== */}
-              <button
-                type="button"
-                className="
-                  absolute
-                  left-4
-                  bottom-[-48px]
-                  z-30
-
-                  bg-[#0878df]
-                  hover:bg-[#056bb5]
-
-                  text-white
-                  text-xs
-                  sm:text-sm
-                  font-medium
-
-                  px-3
-                  sm:px-4
-                  py-2
-
-                  rounded-lg
-
-                  opacity-0
-
-                  group-hover:bottom-4
-                  group-hover:opacity-100
-
-                  transition-all
-                  duration-300
-                  ease-out
-                "
-              >
-                Shop Now →
-              </button>
-
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-
       </div>
     </section>
   );
-}
+};
 
 export default Categories;
