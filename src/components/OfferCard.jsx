@@ -1,29 +1,17 @@
-import React, { useState } from "react";
+import React from "react";
 
 const hoverColor = {
-  orange: "bg-[#ffb52e]",
-  blue: "bg-[#1689e8]",
+  orange: "bg-[#ffb321]",
+  blue: "bg-gradient-to-r from-[#4eb5ff] to-[#2395e8]",
   red: "bg-[#ff4b4b]",
 };
 
 const OfferCard = ({ offer }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <div
       className={`w-full overflow-hidden rounded-[15px] ${
-        offer.hoverEffect ? "cursor-pointer" : ""
+        offer.hoverEffect ? "group cursor-pointer" : ""
       }`}
-      onMouseEnter={() => {
-        if (offer.hoverEffect) {
-          setIsHovered(true);
-        }
-      }}
-      onMouseLeave={() => {
-        if (offer.hoverEffect) {
-          setIsHovered(false);
-        }
-      }}
     >
       {/* Offer Image */}
       <div className="h-48 w-full overflow-hidden">
@@ -37,7 +25,7 @@ const OfferCard = ({ offer }) => {
       {/* Bottom Code Bar */}
       <div
         className={`
-          flex min-h-[64px] items-center justify-between
+          relative flex min-h-[64px] items-center justify-between
           px-5
           ${
             offer.theme === "orange"
@@ -58,10 +46,7 @@ const OfferCard = ({ offer }) => {
       >
         {/* Code */}
         <div className="text-[16px] text-white">
-          Code :{" "}
-          <strong className="ml-1 font-bold">
-            {offer.code}
-          </strong>
+          Code : <strong className="ml-1 font-bold">{offer.code}</strong>
         </div>
 
         {/* Copy Button */}
@@ -72,7 +57,7 @@ const OfferCard = ({ offer }) => {
             isolate
             overflow-hidden
             rounded-[7px]
-            bg-white/15
+            bg-white/25
             px-5
             py-[9px]
             text-[15px]
@@ -84,28 +69,25 @@ const OfferCard = ({ offer }) => {
           {offer.hoverEffect && (
             <span
               className={`
-                pointer-events-none
-                absolute
-                inset-0
-                z-0
-                origin-top
-                ${hoverColor[offer.theme]}
-                transition-transform
-                duration-300
-                ease-out
-                ${
-                  isHovered
-                    ? "translate-y-0"
-                    : "-translate-y-full"
-                }
-              `}
+      pointer-events-none
+      absolute
+      top-0
+      left-0
+      z-0
+      h-0
+      w-full
+      rounded-[5px]
+      ${hoverColor[offer.theme]}
+      transition-[height]
+      duration-100
+      ease-out
+      group-hover:h-full
+    `}
             />
           )}
 
           {/* Button Text */}
-          <span className="relative z-10">
-            Copy Code
-          </span>
+          <span className="relative z-10">Copy Code</span>
         </button>
       </div>
     </div>
