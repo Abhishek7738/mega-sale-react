@@ -1,6 +1,15 @@
+import { useCart } from "../context/CartContext";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 function Navbar() {
+  const {
+    cartCount,
+    cartItems,
+    addToCart,
+    increaseQuantity,
+    decreaseQuantity,
+  } = useCart();
   const [search, setSearch] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
@@ -16,7 +25,6 @@ function Navbar() {
   // Thunder's Deals..
   const [showDeals, setShowDeals] = useState(false);
   const [dealIndex, setDealIndex] = useState(0);
-  const [cartQuantities, setCartQuantities] = useState({});
 
   // Search products
   const products = ["Almonds", "Cashews", "Pistachios", "Walnuts"];
@@ -99,6 +107,10 @@ function Navbar() {
       stock: "In Stock",
     },
   ];
+  const currentDeal = thunderDeals[dealIndex];
+
+  const currentQuantity =
+    cartItems.find((item) => item.name === currentDeal.name)?.quantity || 0;
 
   const filteredProducts = products.filter((product) =>
     product.toLowerCase().includes(search.toLowerCase()),
@@ -272,12 +284,19 @@ function Navbar() {
                 <i className="fa-regular fa-heart"></i>
               </button>
 
-              <button
+              <Link
+                to="/cart"
                 aria-label="Cart"
-                className="w-11 xl:w-12 h-10 border-r border-gray-200 text-gray-600 hover:text-blue-600 transition"
+                className="relative flex h-10 w-11 items-center justify-center border-r border-gray-200 text-gray-600 transition hover:text-blue-600"
               >
                 <i className="fa-solid fa-cart-shopping"></i>
-              </button>
+
+                {cartCount > 0 && (
+                  <span className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[11px] font-semibold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
 
               <button
                 aria-label="Account"
@@ -376,9 +395,9 @@ function Navbar() {
                   "
                 >
                   {allCategoryMenu.map((category) => (
-                    <a
+                    <Link
                       key={category}
-                      href="#"
+                      to={`/category/${encodeURIComponent(category)}`}
                       className="
                         group
                         relative
@@ -429,7 +448,7 @@ function Navbar() {
                       >
                         {category}
                       </span>
-                    </a>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -616,7 +635,7 @@ function Navbar() {
                             : "text-red-500"
                         }
                       >
-                        .{thunderDeals[dealIndex].stock}
+                        {thunderDeals[dealIndex].stock}
                       </span>
                     </div>
 
@@ -640,17 +659,11 @@ function Navbar() {
                       >
                         Out of Stock
                       </button>
-                    ) : (cartQuantities[thunderDeals[dealIndex].id] || 0) ===
-                      0 ? (
+                    ) : currentQuantity === 0 ? (
                       <button
                         type="button"
                         onClick={() => {
-                          const productId = thunderDeals[dealIndex].id;
-
-                          setCartQuantities((current) => ({
-                            ...current,
-                            [productId]: 1,
-                          }));
+                          addToCart(currentDeal);
                         }}
                         className="
       mt-4
@@ -673,22 +686,7 @@ function Navbar() {
                         <button
                           type="button"
                           onClick={() => {
-                            const productId = thunderDeals[dealIndex].id;
-
-                            setCartQuantities((current) => {
-                              const quantity = current[productId] || 0;
-
-                              if (quantity <= 1) {
-                                const updated = { ...current };
-                                delete updated[productId];
-                                return updated;
-                              }
-
-                              return {
-                                ...current,
-                                [productId]: quantity - 1,
-                              };
-                            });
+                            decreaseQuantity(currentDeal.name);
                           }}
                           aria-label="Decrease quantity"
                           className="
@@ -709,18 +707,13 @@ function Navbar() {
                         </button>
 
                         <span className="flex h-full flex-1 items-center justify-center text-sm font-semibold text-gray-800">
-                          {cartQuantities[thunderDeals[dealIndex].id]}
+                          {currentQuantity}
                         </span>
 
                         <button
                           type="button"
                           onClick={() => {
-                            const productId = thunderDeals[dealIndex].id;
-
-                            setCartQuantities((current) => ({
-                              ...current,
-                              [productId]: (current[productId] || 0) + 1,
-                            }));
+                            increaseQuantity(currentDeal.name);
                           }}
                           aria-label="Increase quantity"
                           className="
@@ -993,10 +986,17 @@ function Navbar() {
             </button>
 
             <button
+              type="button"
               aria-label="Cart"
-              className="text-gray-600 hover:text-blue-600 transition"
+              className="relative text-gray-600 hover:text-blue-600 transition"
             >
               <i className="fa-solid fa-cart-shopping"></i>
+
+              {cartCount > 0 && (
+                <span className="absolute -right-3 -top-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-[11px] font-semibold text-white">
+                  {cartCount}
+                </span>
+              )}
             </button>
 
             <button

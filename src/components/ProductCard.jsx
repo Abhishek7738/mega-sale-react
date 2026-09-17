@@ -1,11 +1,15 @@
+import { useCart } from "../context/CartContext";
+
 function ProductCard({ name, weight, price, oldPrice, image, featured }) {
+  const { addToCart } = useCart();
+
   return (
     <div className="group flex h-full w-full flex-col overflow-hidden rounded-xl bg-white shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       {/* Product Image */}
       <div className="relative flex h-[145px] items-center justify-center bg-white">
         {/* Featured Badge */}
         {featured && (
-           <div className="absolute left-0 top-2 z-10 bg-amber-400 px-3 py-1.5 text-xs font-semibold text-white after:absolute after:right-[-14px] after:top-0 after:border-y-[14px] after:border-l-[14px] after:border-y-transparent after:border-l-amber-400 after:content-['']">
+          <div className="absolute left-0 top-2 z-10 bg-amber-400 px-3 py-1.5 text-xs font-semibold text-white after:absolute after:right-[-14px] after:top-0 after:border-y-[14px] after:border-l-[14px] after:border-y-transparent after:border-l-amber-400 after:content-['']">
             Featured
           </div>
         )}
@@ -79,12 +83,22 @@ function ProductCard({ name, weight, price, oldPrice, image, featured }) {
           <span className="text-blue-600">In Stock</span>
         </div>
 
-        {/* Add */}
+        {/* Add to Cart */}
         <div className="mt-auto flex items-center justify-between">
           <span className="text-xs text-gray-700">Add</span>
 
           <button
             type="button"
+            onClick={() =>
+              addToCart({
+                name,
+                weight,
+                price,
+                oldPrice,
+                image,
+                featured,
+              })
+            }
             className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-lg text-white transition-colors hover:bg-blue-700"
           >
             <i className="fa-solid fa-plus"></i>

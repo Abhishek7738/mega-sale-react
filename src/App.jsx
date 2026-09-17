@@ -1,3 +1,5 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import Navbar from "./components/Navbar";
 import TopBar from "./components/TopBar";
 import Hero from "./components/Hero";
@@ -19,30 +21,73 @@ import FeaturedBlogSection from "./components/FeaturedBlogSection";
 import FooterSection from "./components/FooterSection";
 import BackToTopButton from "./components/BackToTopButton";
 
-function App() {
+import CategoryPage from "./Pages/CategoryPage";
+import CartPage from "./Pages/CartPage";
+import CheckoutPage from "./Pages/CheckoutPage";
+
+import { CartProvider } from "./context/CartContext";
+
+function HomePage() {
   return (
     <div>
       <TopBar />
+
       <Navbar />
+
       <Hero />
+
       <PromoSection />
+
       <Categories />
+
       <ProductSection />
+
       <OfferSection />
+
       <TopSellingSection />
+
       <BannerSection />
-      <BreakfastDairySection/>
-      <FreshFruitsSection/>
-      <PromoBannersSection/>
-      <OrganicVegetablesSection/>
-      <BestSellersSection/>
+
+      <BreakfastDairySection />
+
+      <FreshFruitsSection />
+
+      <PromoBannersSection />
+
+      <OrganicVegetablesSection />
+
+      <BestSellersSection />
+
       <DeliveryBannersSection />
-      <TrendingProductsSection/>
-      <NewArrivalsSection/>
+
+      <TrendingProductsSection />
+
+      <NewArrivalsSection />
+
       <FeaturedBlogSection />
-      <FooterSection/>
-      <BackToTopButton/>
+
+      <FooterSection />
+
+      <BackToTopButton />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <CartProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+
+          <Route path="/category/:categoryName" element={<CategoryPage />} />
+
+          <Route path="/cart" element={<CartPage />} />
+
+          <Route path="/checkout" element={<CheckoutPage />} />
+        </Routes>
+      </BrowserRouter>
+    </CartProvider>
   );
 }
 
