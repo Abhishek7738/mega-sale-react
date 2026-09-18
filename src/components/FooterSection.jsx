@@ -75,7 +75,7 @@ function FooterSection() {
           {/* Company */}
           <div>
             <img
-              src="/download.svg"
+              src="/RUROO_Logo.png"
               alt="Megsale"
               className="mb-4 h-10 w-auto"
             />

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import TopBar from "./components/TopBar";
@@ -27,13 +27,21 @@ import CheckoutPage from "./Pages/CheckoutPage";
 
 import { CartProvider } from "./context/CartContext";
 
+function MainLayout() {
+  return (
+    <>
+      <TopBar />
+      <Navbar />
+      <Outlet />
+      <FooterSection />
+      <BackToTopButton />
+    </>
+  );
+}
+
 function HomePage() {
   return (
     <div>
-      <TopBar />
-
-      <Navbar />
-
       <Hero />
 
       <PromoSection />
@@ -65,10 +73,6 @@ function HomePage() {
       <NewArrivalsSection />
 
       <FeaturedBlogSection />
-
-      <FooterSection />
-
-      <BackToTopButton />
     </div>
   );
 }
@@ -78,13 +82,15 @@ function App() {
     <CartProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route  element={<MainLayout />}>
+            <Route index element={<HomePage />} />
 
-          <Route path="/category/:categoryName" element={<CategoryPage />} />
+            <Route path="category/:categoryName" element={<CategoryPage />} />
 
-          <Route path="/cart" element={<CartPage />} />
+            <Route path="cart" element={<CartPage />} />
 
-          <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="checkout" element={<CheckoutPage />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </CartProvider>

@@ -8,12 +8,12 @@ export function CartProvider({ children }) {
   const addToCart = (product) => {
     setCartItems((previousItems) => {
       const existingProduct = previousItems.find(
-        (item) => item.name === product.name,
+        (item) => item.id === product.id,
       );
 
       if (existingProduct) {
         return previousItems.map((item) =>
-          item.name === product.name
+          item.id === product.id
             ? {
                 ...item,
                 quantity: item.quantity + 1,
@@ -32,10 +32,10 @@ export function CartProvider({ children }) {
     });
   };
 
-  const increaseQuantity = (productName) => {
+  const increaseQuantity = (productId) => {
     setCartItems((previousItems) =>
       previousItems.map((item) =>
-        item.name === productName
+        item.id === productId
           ? {
               ...item,
               quantity: item.quantity + 1,
@@ -45,11 +45,11 @@ export function CartProvider({ children }) {
     );
   };
 
-  const decreaseQuantity = (productName) => {
+  const decreaseQuantity = (productId) => {
     setCartItems((previousItems) =>
       previousItems
         .map((item) =>
-          item.name === productName
+          item.id === productId
             ? {
                 ...item,
                 quantity: item.quantity - 1,
@@ -59,9 +59,10 @@ export function CartProvider({ children }) {
         .filter((item) => item.quantity > 0),
     );
   };
-    const removeFromCart = (productName) => {
+  
+    const removeFromCart = (productId) => {
     setCartItems((previousItems) =>
-      previousItems.filter((item) => item.name !== productName),
+      previousItems.filter((item) => item.id !== productId),
     );
   };
 

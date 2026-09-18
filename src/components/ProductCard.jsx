@@ -1,6 +1,6 @@
 import { useCart } from "../context/CartContext";
 
-function ProductCard({ name, weight, price, oldPrice, image, featured }) {
+function ProductCard({id, name, weight, price, oldPrice, image, featured }) {
   const { addToCart } = useCart();
 
   return (
@@ -91,6 +91,7 @@ function ProductCard({ name, weight, price, oldPrice, image, featured }) {
             type="button"
             onClick={() =>
               addToCart({
+                id,
                 name,
                 weight,
                 price,

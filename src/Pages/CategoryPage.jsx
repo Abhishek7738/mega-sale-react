@@ -11,7 +11,7 @@ function CategoryPage() {
 
 const categoryProducts = {
   "milk & dairy products": [
-    {
+    { id:1,
       name: "Fresh Milk",
       weight: "1 Litre",
       price: 65,
@@ -19,7 +19,7 @@ const categoryProducts = {
       image: "/Milk.png",
       featured: true,
     },
-    {
+    { id:2,
       name: "Organic Curd",
       weight: "500 g",
       price: 55,
@@ -27,7 +27,7 @@ const categoryProducts = {
       image: "/Dahi.png",
       featured: false,
     },
-    {
+    { id:3,
       name: "Fresh Butter",
       weight: "250 g",
       price: 120,
@@ -35,7 +35,7 @@ const categoryProducts = {
       image: "/Butter.png",
       featured: false,
     },
-    {
+    { id:4,
       name: "Nutritious Ghee",
       weight: "1 kg",
       price: 779,
@@ -46,7 +46,7 @@ const categoryProducts = {
   ],
 
  "vegetables & fruits": [
-  {
+  { id:5,
     name: "Fresh Orange",
     weight: "1 kg",
     price: 99,
@@ -54,7 +54,7 @@ const categoryProducts = {
     image: "/Orange.png",
     featured: true,
   },
-  {
+  { id:6,
     name: "Fresh Onion",
     weight: "1 kg",
     price: 50,
@@ -62,7 +62,7 @@ const categoryProducts = {
     image: "/Onion.png",
     featured: false,
   },
-  {
+  { id:7,
     name: "Fresh Tomato",
     weight: "1 kg",
     price: 60,
@@ -72,7 +72,7 @@ const categoryProducts = {
   },
 ],
   "grocery & food": [
-    {
+    { id:8,
       name: "Fresh Jam",
       weight: "500 g",
       price: 120,
@@ -80,7 +80,7 @@ const categoryProducts = {
       image: "/Jam.png",
       featured: true,
     },
-    {
+    { id:9,
       name: "Grocery Food",
       weight: "1 Pack",
       price: 150,
@@ -125,9 +125,10 @@ const products =
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {products.map((product, index) => (
+          {products.map((product) => (
             <ProductCard
-              key={index}
+              key={product.id}
+              id={product.id}
               name={product.name}
               weight={product.weight}
               price={product.price}

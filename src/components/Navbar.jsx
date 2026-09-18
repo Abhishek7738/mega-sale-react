@@ -127,7 +127,7 @@ function Navbar() {
             {/* Logo */}
             <div className="w-[105px] sm:w-[125px] lg:w-[145px] shrink-0">
               <img
-                src="/download.svg"
+                src="/RUROO_Logo.png"
                 alt="MegaSale Logo"
                 className="w-full h-auto"
               />
@@ -396,6 +396,7 @@ function Navbar() {
                 >
                   {allCategoryMenu.map((category) => (
                     <Link
+                      onClick={() => setShowCategories(false)}
                       key={category}
                       to={`/category/${encodeURIComponent(category)}`}
                       className="
@@ -458,8 +459,8 @@ function Navbar() {
             <ul className="flex-1 flex items-center justify-center gap-4 xl:gap-7 ml-5 xl:ml-8">
               {navLinks.map((link) => (
                 <li key={link}>
-                  <a
-                    href="#"
+                  <Link
+                    to={link === "Home" ? "/" : "#"}
                     className="
                       group
                       relative
@@ -493,7 +494,7 @@ function Navbar() {
                         group-hover:w-full
                       "
                     ></span>
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -828,9 +829,13 @@ function Navbar() {
                 "
               >
                 {allCategoryMenu.map((category) => (
-                  <a
+                  <Link
                     key={category}
-                    href="#"
+                    to={`/category/${encodeURIComponent(category)}`}
+                    onClick={() => {
+                      setShowCategories(false);
+                      setShowMenu(false);
+                    }}
                     className="
                       group
                       relative
@@ -869,7 +874,7 @@ function Navbar() {
                     <span className="group-hover:translate-x-1 transition-transform duration-300">
                       {category}
                     </span>
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
@@ -924,8 +929,8 @@ function Navbar() {
             <ul className="mx-4 mb-2 rounded-md overflow-hidden border border-gray-100 bg-gray-50">
               {navLinks.map((link) => (
                 <li key={link}>
-                  <a
-                    href="#"
+                  <Link
+                    to={link === "Home" ? "/" : "#"}
                     onClick={() => setShowMenu(false)}
                     className="
                       group
@@ -961,7 +966,7 @@ function Navbar() {
                     ></span>
 
                     {link}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -985,10 +990,10 @@ function Navbar() {
               <i className="fa-regular fa-heart"></i>
             </button>
 
-            <button
-              type="button"
+            <Link
+              to="/cart"
               aria-label="Cart"
-              className="relative text-gray-600 hover:text-blue-600 transition"
+              className="relative flex items-center justify-center text-gray-600 transition hover:text-blue-600"              
             >
               <i className="fa-solid fa-cart-shopping"></i>
 
@@ -997,7 +1002,7 @@ function Navbar() {
                   {cartCount}
                 </span>
               )}
-            </button>
+            </Link>
 
             <button
               aria-label="Account"
