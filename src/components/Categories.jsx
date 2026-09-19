@@ -150,7 +150,7 @@ const Categories = () => {
   };
 
   return (
-    <section className="w-full py-8">
+    <section className="w-full [#f0f7ff] py-8">
       {/* Section Container */}
       <div className="mx-auto w-full max-w-[1168px] px-4">
         {/* Section Header */}

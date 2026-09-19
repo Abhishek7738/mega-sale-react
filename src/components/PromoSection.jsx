@@ -59,7 +59,7 @@ function PromoSection() {
   }, [currentIndex, carouselBanners.length]);
 
   return (
-    <section className="w-full py-[60px] px-[8%]">
+    <section className="w-full bg-[#f8fafc] py-[60px] px-[8%]">
       <div className="overflow-hidden">
         <div
           className={`promo-carousel-track flex gap-[20px] ${

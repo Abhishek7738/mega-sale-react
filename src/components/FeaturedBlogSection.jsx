@@ -61,7 +61,7 @@ function FeaturedBlogSection() {
   }, [isTransitioning]);
 
   return (
-    <section className="py-8">
+    <section className="w-full bg-[#f8fafc] py-12">
       <div className="mx-auto w-[90%] max-w-[1140px]">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-[#263238]">Featured Blog</h2>

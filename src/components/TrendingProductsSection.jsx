@@ -1,21 +1,13 @@
 import ProductCard from "./ProductCard";
+import products from "../data/products";
 
-const trendingProducts = [
-  {
-    id: 1,
-    name: "Premium Seafood",
-    image: "/Fish.png",
-    weight: "10 Pieces",
-    price: "₹ 574.00",
-    oldPrice: "",
-    stock: "In Stock",
-    featured: false,
-  },
-];
+const trendingProducts = products.filter((product) =>
+  ["prod-seafood"].includes(product.id),
+);
 
 function TrendingProductsSection() {
   return (
-    <section className="py-8">
+    <section className="w-full bg-[#f8fafc] py-12">
       <div className="m-auto w-[90%] max-w-6xl">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-[#263238]">

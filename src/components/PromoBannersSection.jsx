@@ -13,7 +13,7 @@ const promoBanners = [
 
 function PromoBannersSection() {
   return (
-    <section className="custom-promo-section w-full py-6 sm:py-8 lg:py-10">
+   <section className="custom-promo-section w-full bg-[#fffaf2] py-10 sm:py-12 lg:py-14">
       <div className="mx-auto w-[92%] max-w-[1140px]">
         <div className="grid grid-cols-1 gap-5 md:gap-6 lg:grid-cols-2">
           {promoBanners.map((banner) => (

@@ -1,0 +1,157 @@
+const products = [
+  {
+    id: "prod-orange",
+    name: "Organic Oranges",
+    weight: "1 KG",
+    price: "₹ 228.78",
+    oldPrice: "₹ 246.00",
+    image: "/Orange.png",
+    featured: true,
+    categories: ["vegetables & fruits"],
+  },
+
+  {
+    id: "prod-cabbage",
+    name: "Gourmet Organic",
+    weight: "1 KG",
+    price: "₹ 246.00",
+    oldPrice: "",
+    image: "/Cabbage.png",
+    featured: false,
+    categories: ["vegetables & fruits"],
+  },
+
+  {
+    id: "prod-onion",
+    name: "Premium Organic",
+    weight: "3 KG",
+    price: "₹ 811.80",
+    oldPrice: "₹ 820.00",
+    image: "/Onion.png",
+    featured: false,
+    categories: ["vegetables & fruits"],
+  },
+
+  {
+    id: "prod-capsicum",
+    name: "Fresh Capsicum",
+    weight: "1 KG",
+    price: "₹ 311.60",
+    oldPrice: "₹ 328.00",
+    image: "/Capsicum.png",
+    featured: false,
+    categories: ["vegetables & fruits"],
+  },
+
+  {
+    id: "prod-banana",
+    name: "Nature's Sweet Banana",
+    weight: "6 KG",
+    price: "₹ 4575.60",
+    oldPrice: "₹ 4920.00",
+    image: "/Banana.png",
+    featured: false,
+    categories: ["vegetables & fruits"],
+  },
+
+  {
+    id: "prod-tomato",
+    name: "Fresh Tomato",
+    weight: "1 KG",
+    price: "₹ 101.00",
+    oldPrice: "₹ 120.00",
+    image: "/Tomato.png",
+    featured: false,
+    categories: ["vegetables & fruits"],
+  },
+
+  {
+    id: "prod-milk",
+    name: "Fresh Milk",
+    weight: "1 L",
+    price: "₹ 68.00",
+    oldPrice: "₹ 75.00",
+    image: "/Milk.png",
+    featured: false,
+    categories: ["milk & dairy products"],
+  },
+
+  {
+    id: "prod-dahi",
+    name: "Fresh Dahi",
+    weight: "500 GM",
+    price: "₹ 55.00",
+    oldPrice: "₹ 65.00",
+    image: "/Dahi.png",
+    featured: false,
+    categories: ["milk & dairy products"],
+  },
+
+  {
+    id: "prod-butter",
+    name: "Premium Butter",
+    weight: "500 GM",
+    price: "₹ 120.00",
+    oldPrice: "₹ 135.00",
+    image: "/Butter.png",
+    featured: false,
+    categories: ["milk & dairy products"],
+  },
+
+  {
+    id: "prod-ghee",
+    name: "Nutritious Ghee",
+    weight: "1 KG",
+    price: "₹ 779.00",
+    oldPrice: "₹ 820.00",
+    image: "/Ghee.png",
+    featured: false,
+    categories: ["milk & dairy products"],
+  },
+
+  {
+    id: "prod-bread",
+    name: "Fresh Bread",
+    weight: "400 GM",
+    price: "₹ 45.00",
+    oldPrice: "₹ 50.00",
+    image: "/Bread.png",
+    featured: false,
+    categories: ["daily breakfast"],
+  },
+
+  {
+    id: "prod-mix-fruit-jam",
+    name: "Fresh Mix Fruit Jam",
+    weight: "500 GM",
+    price: "₹ 150.00",
+    oldPrice: "₹ 175.00",
+    image: "/Jam.png",
+    featured: false,
+    categories: ["grocery & staples"],
+  },
+
+  {
+    id: "prod-seafood",
+    name: "Premium Seafood",
+    weight: "10 Pieces",
+    price: "₹ 574.00",
+    oldPrice: "",
+    image: "/Fish.png",
+    featured: false,
+    categories: ["frozen foods"],
+  },
+
+  {
+    id: "prod-cold-drinks",
+    name: "Refreshing Cold Drinks",
+    weight: "3 Cans",
+    price: "₹ 278.80",
+    oldPrice: "₹ 328.00",
+    image: "/Soda.png",
+    featured: false,
+    categories: ["wines & soft drinks", "beverages"],
+  },
+];
+
+export default products;

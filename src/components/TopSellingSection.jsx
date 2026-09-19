@@ -1,41 +1,13 @@
 import ProductCard from "./ProductCard";
+import products from "../data/products";
 
-const topSellingProducts = [
-  {
-    id: 1,
-    name: "Premium Seafood",
-    weight: "10 Pieces",
-    price: "574.00",
-    oldPrice: null,
-    image: "/Fish.png",
-    stock: "In Stock",
-    featured: false,
-  },
-  {
-    id: 2,
-    name: "Nutritious Ghee",
-    weight: "1 KG",
-    price: "779.00",
-    oldPrice: "820.00",
-    image: "/Ghee.png",
-    stock: "In Stock",
-    featured: false,
-  },
-  {
-    id: 3,
-    name: "Refreshing Cold Drinks",
-    weight: "3 Cans",
-    price: "278.80",
-    oldPrice: "328.00",
-    image: "/Soda.png",
-    stock: "In Stock",
-    featured: false,
-  },
-];
+const topSellingProducts = products.filter((product) =>
+  ["prod-seafood", "prod-cold-drinks", "prod-ghee"].includes(product.id),
+);
 
 function TopSellingSection() {
   return (
-    <section className="w-full py-12">
+    <section className="w-full bg-[#f4faf6] py-12">
       <div className="mx-auto w-[90%] max-w-6xl">
 
         {/* Section Heading */}

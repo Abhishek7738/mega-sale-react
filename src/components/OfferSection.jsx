@@ -3,7 +3,7 @@ import OfferCard from "./OfferCard";
 
 const offers = [
   {
-    id: 1,
+    id: 101,
     discount: "GET 10% OFF",
     condition: "When you spend $20",
     validity: "Valid for 30 days",
@@ -13,7 +13,7 @@ const offers = [
     hoverEffect: true,
   },
   {
-    id: 2,
+    id: 102,
     discount: "GET 10% OFF",
     condition: "When you spend $20",
     validity: "Valid for 30 days",
@@ -23,7 +23,7 @@ const offers = [
     hoverEffect: true,
   },
   {
-    id: 3,
+    id: 103,
     discount: "GET 10% OFF",
     condition: "When you spend $20",
     validity: "Valid for 30 days",
@@ -85,7 +85,7 @@ function OfferSection() {
   };
 
   return (
-    <section className="w-full py-12">
+    <section className="w-full bg-[#fff7ed] py-12">
       <div className="mx-auto w-[90%] max-w-6xl">
 
         {/* Section Heading */}

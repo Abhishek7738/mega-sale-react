@@ -20,7 +20,7 @@ const deliveryBanners = [
 
 function DeliveryBannersSection() {
   return (
-    <section className="w-full py-4 sm:py-5">
+    <section className="w-full bg-white py-6 sm:py-7">
       <div className="mx-auto w-[92%] max-w-[1140px]">
         <div
           className="

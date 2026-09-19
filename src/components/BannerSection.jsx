@@ -106,7 +106,7 @@ function BannerSection() {
     currentIndex === carouselBanners.length - 1 ? 0 : currentIndex - 1;
 
   return (
-    <section className="w-full py-8 sm:py-10 lg:py-12">
+    <section className="w-full bg-white py-8 sm:py-10 lg:py-12">
       {/* Banner viewport */}
       <div className="mx-auto w-[90%] max-w-6xl overflow-hidden rounded-lg sm:rounded-xl">
         {/* Carousel track */}

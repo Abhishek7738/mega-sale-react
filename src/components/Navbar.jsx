@@ -1,6 +1,7 @@
 import { useCart } from "../context/CartContext";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import productCatalog from "../data/products";
 
 function Navbar() {
   const {
@@ -18,6 +19,9 @@ function Navbar() {
 
   // All Categories menu
   const [showCategories, setShowCategories] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(
+    "Milk & Dairy Products",
+  );
 
   // Navigation links inside Menu
   const [showNavMenu, setShowNavMenu] = useState(false);
@@ -43,14 +47,14 @@ function Navbar() {
 
   // All Categories
   const allCategoryMenu = [
-    "Milk & Dairy Products",
-    "Wines & Soft Drinks",
-    "Grocery & Staples",
-    "Biscuits & Snacks",
-    "Frozen Foods",
-    "Daily Breakfast",
-    "Beverages",
-    "Vegetables & Fruits",
+    { name: "Milk & Dairy Products", icon: "fa-bottle-water" },
+    { name: "Wines & Soft Drinks", icon: "fa-wine-glass" },
+    { name: "Grocery & Staples", icon: "fa-basket-shopping" },
+    { name: "Biscuits & Snacks", icon: "fa-cookie-bite" },
+    { name: "Frozen Foods", icon: "fa-snowflake" },
+    { name: "Daily Breakfast", icon: "fa-bread-slice" },
+    { name: "Beverages", icon: "fa-glass-water" },
+    { name: "Vegetables & Fruits", icon: "fa-apple-whole" },
   ];
 
   // Top category select
@@ -77,7 +81,7 @@ function Navbar() {
   // Thunder Deals Products
   const thunderDeals = [
     {
-      id: 1,
+      id: 101,
       name: "Premium Seafood",
       image: "/Fish.png",
       weight: "10 Pieces",
@@ -87,7 +91,7 @@ function Navbar() {
       stock: "In Stock",
     },
     {
-      id: 2,
+      id: 102,
       name: "Refreshing Cold Drinks",
       image: "/Soda.png",
       weight: "3 Cans",
@@ -97,7 +101,7 @@ function Navbar() {
       stock: "Out of Stock",
     },
     {
-      id: 3,
+      id: 103,
       name: "Nutritious Ghee",
       image: "/Ghee.png",
       weight: "1 KG",
@@ -110,11 +114,17 @@ function Navbar() {
   const currentDeal = thunderDeals[dealIndex];
 
   const currentQuantity =
-    cartItems.find((item) => item.name === currentDeal.name)?.quantity || 0;
+    cartItems.find((item) => item.id === currentDeal.id)?.quantity || 0;
 
   const filteredProducts = products.filter((product) =>
     product.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const selectedCategoryProducts = productCatalog
+    .filter((product) =>
+      product.categories?.includes(selectedCategory.toLowerCase()),
+    )
+    .slice(0, 4);
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white shadow-sm border-b border-gray-100">
@@ -343,7 +353,8 @@ function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center min-h-[70px]">
             {/* All Categories */}
-            <div className="relative shrink-0">
+            <div className="relative shrink-0"
+                 onMouseLeave={() => setShowCategories(false)}>
               <button
                 type="button"
                 onClick={() => {
@@ -379,78 +390,109 @@ function Navbar() {
 
               {/* Desktop Category Dropdown */}
               {showCategories && (
-                <div
-                  className="
-                    absolute
-                    left-0
-                    top-[58px]
-                    w-[300px]
-                    bg-white
-                    rounded-lg
-                    shadow-xl
-                    border
-                    border-gray-100
-                    py-3
-                    z-50
-                  "
-                >
-                  {allCategoryMenu.map((category) => (
-                    <Link
-                      onClick={() => setShowCategories(false)}
-                      key={category}
-                      to={`/category/${encodeURIComponent(category)}`}
-                      className="
-                        group
-                        relative
-                        flex
-                        items-center
-                        gap-4
-                        px-6
-                        py-3
-                        text-[15px]
-                        text-[#34506f]
-                        overflow-hidden
-                      "
-                    >
-                      {/* Smooth left line */}
-                      <span
-                        className="
-                          absolute
-                          left-0
-                          top-0
-                          h-full
-                          w-0
-                          bg-blue-600
-                          transition-all
-                          duration-300
-                          ease-out
-                          group-hover:w-[3px]
-                        "
-                      ></span>
+                <div className="absolute left-0 top-[58px] z-50 flex w-[850px] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl">
+                  {/* Categories List */}
+                  <div className="w-[280px] shrink-0 border-r border-gray-100 bg-white py-3">
+                    {allCategoryMenu.map((category) => {
+                      const isSelected = selectedCategory === category.name;
 
-                      <i
-                        className="
-                          fa-solid
-                          fa-leaf
-                          text-gray-400
-                          group-hover:text-blue-600
-                          transition-colors
-                          duration-300
-                        "
-                      ></i>
+                      return (
+                        <Link
+                          key={category.name}
+                          to={`/category/${encodeURIComponent(category.name)}`}
+                          onMouseEnter={() =>
+                            setSelectedCategory(category.name)
+                          }
+                          onClick={() => setShowCategories(false)}
+                          className={`group relative flex items-center gap-4 overflow-hidden px-6 py-3.5 text-[15px] transition-all duration-300 ${
+                            isSelected
+                              ? "bg-blue-50 text-blue-600"
+                              : "text-[#34506f] hover:bg-blue-50/50 hover:text-blue-600"
+                          }`}
+                        >
+                          <span
+                            className={`absolute left-0 top-0 h-full bg-blue-600 transition-all duration-300 ${
+                              isSelected ? "w-[3px]" : "w-0 group-hover:w-[3px]"
+                            }`}
+                          ></span>
 
-                      <span
-                        className="
-                          transition-all
-                          duration-300
-                          group-hover:translate-x-1
-                          group-hover:text-blue-600
-                        "
+                          <i
+                            className={`fa-solid ${category.icon} w-5 text-center text-lg transition-colors duration-300 ${
+                              isSelected
+                                ? "text-blue-600"
+                                : "text-gray-400 group-hover:text-blue-600"
+                            }`}
+                          ></i>
+
+                          <span className="relative whitespace-nowrap transition-transform duration-300 group-hover:translate-x-1">
+                            {category.name}
+                            <span
+                              className={`absolute -bottom-1 left-0 h-[2px] rounded-full bg-blue-600 transition-all duration-300 ease-out ${
+                                isSelected ? "w-full" : "w-0 group-hover:w-full"
+                              }`}
+                            ></span>
+                          </span>
+
+                          <i className="fa-solid fa-chevron-right ml-auto text-xs text-gray-300 transition-all duration-300 group-hover:translate-x-1 group-hover:text-blue-600"></i>
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {/* Products Preview */}
+                  <div className="flex-1 bg-white p-6">
+                    <div className="mb-5 flex items-center justify-between">
+                      <h3 className="text-2xl font-bold text-[#263238]">
+                        {selectedCategory}
+                      </h3>
+
+                      <Link
+                        to={`/category/${encodeURIComponent(selectedCategory)}`}
+                        onClick={() => setShowCategories(false)}
+                        className="flex items-center gap-2 text-sm font-semibold text-blue-600 transition-colors hover:text-blue-700"
                       >
-                        {category}
-                      </span>
-                    </Link>
-                  ))}
+                        View All
+                        <i className="fa-solid fa-arrow-right text-xs"></i>
+                      </Link>
+                    </div>
+
+                    {selectedCategoryProducts.length > 0 ? (
+                      <div className="grid grid-cols-4 gap-4">
+                        {selectedCategoryProducts.map((product) => (
+                          <Link
+                            key={product.id}
+                            to={`/category/${encodeURIComponent(selectedCategory)}`}
+                            onClick={() => setShowCategories(false)}
+                            className="group overflow-hidden rounded-xl border border-gray-100 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                          >
+                            <div className="flex h-[150px] items-center justify-center bg-white p-3">
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+
+                            <div className="px-3 pb-4 text-center">
+                              <h4 className="truncate text-sm font-semibold text-gray-800">
+                                {product.name}
+                              </h4>
+                              <p className="mt-1 text-xs text-gray-500">
+                                {product.weight}
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-blue-600">
+                                {product.price}
+                              </p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex h-[230px] items-center justify-center text-sm text-gray-400">
+                        No products available in this category.
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -687,7 +729,7 @@ function Navbar() {
                         <button
                           type="button"
                           onClick={() => {
-                            decreaseQuantity(currentDeal.name);
+                            decreaseQuantity(currentDeal.id);
                           }}
                           aria-label="Decrease quantity"
                           className="
@@ -714,7 +756,7 @@ function Navbar() {
                         <button
                           type="button"
                           onClick={() => {
-                            increaseQuantity(currentDeal.name);
+                            increaseQuantity(currentDeal.id);
                           }}
                           aria-label="Increase quantity"
                           className="
@@ -831,7 +873,7 @@ function Navbar() {
                 {allCategoryMenu.map((category) => (
                   <Link
                     key={category}
-                    to={`/category/${encodeURIComponent(category)}`}
+                    to={`/category/${encodeURIComponent(category.name)}`}
                     onClick={() => {
                       setShowCategories(false);
                       setShowMenu(false);
@@ -869,10 +911,12 @@ function Navbar() {
                       "
                     ></span>
 
-                    <i className="fa-solid fa-leaf text-gray-400 group-hover:text-blue-600"></i>
+                    <i
+                      className={`fa-solid ${category.icon} w-5 text-center text-gray-400 transition-colors duration-300 group-hover:text-blue-600`}
+                    ></i>
 
                     <span className="group-hover:translate-x-1 transition-transform duration-300">
-                      {category}
+                      {category.name}
                     </span>
                   </Link>
                 ))}
@@ -993,7 +1037,7 @@ function Navbar() {
             <Link
               to="/cart"
               aria-label="Cart"
-              className="relative flex items-center justify-center text-gray-600 transition hover:text-blue-600"              
+              className="relative flex items-center justify-center text-gray-600 transition hover:text-blue-600"
             >
               <i className="fa-solid fa-cart-shopping"></i>
 

@@ -57,7 +57,7 @@ function CartPage() {
           <div className="space-y-4 lg:col-span-2">
             {cartItems.map((item) => (
               <div
-                key={item.name}
+                key={item.id}
                 className="flex flex-col gap-4 rounded-xl bg-white p-4 shadow-sm sm:flex-row sm:items-center"
               >
                 {/* Product Image */}
@@ -88,7 +88,7 @@ function CartPage() {
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => decreaseQuantity(item.name)}
+                    onClick={() => decreaseQuantity(item.id)}
                     aria-label="Decrease quantity"
                     className="flex h-8 w-8 items-center justify-center rounded-md bg-gray-200 text-lg font-bold text-gray-700 transition hover:bg-gray-300"
                   >
@@ -101,7 +101,7 @@ function CartPage() {
 
                   <button
                     type="button"
-                    onClick={() => increaseQuantity(item.name)}
+                    onClick={() => increaseQuantity(item.id)}
                     aria-label="Increase quantity"
                     className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600 text-lg font-bold text-white transition hover:bg-blue-700"
                   >
@@ -112,7 +112,7 @@ function CartPage() {
                 {/* Remove Button */}
                 <button
                   type="button"
-                  onClick={() => removeFromCart(item.name)}
+                  onClick={() => removeFromCart(item.id)}
                   className="text-sm font-semibold text-red-500 transition hover:text-red-700"
                 >
                   Remove
