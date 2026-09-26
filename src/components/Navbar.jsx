@@ -1,5 +1,5 @@
 import { useCart } from "../context/CartContext";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import productCatalog from "../data/products";
 
@@ -19,6 +19,28 @@ function Navbar() {
 
   // All Categories menu
   const [showCategories, setShowCategories] = useState(false);
+  const categoriesRef = useRef(null);
+  const mobileCategoriesRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const clickedInsideDesktop =
+        categoriesRef.current?.contains(event.target);
+      const clickedInsideMobile =
+        mobileCategoriesRef.current?.contains(event.target);
+
+      if (!clickedInsideDesktop && !clickedInsideMobile) {
+        setShowCategories(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const [selectedCategory, setSelectedCategory] = useState(
     "Milk & Dairy Products",
   );
@@ -353,8 +375,7 @@ function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center min-h-[70px]">
             {/* All Categories */}
-            <div className="relative shrink-0"
-                 onMouseLeave={() => setShowCategories(false)}>
+            <div ref={categoriesRef} className="relative shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -858,68 +879,124 @@ function Navbar() {
               ></i>
             </button>
 
-            {/* Category List */}
+            {/* Category List + Product Preview */}
             {showCategories && (
               <div
+                ref={mobileCategoriesRef}
                 className="
                   mt-2
+                  overflow-hidden
+                  rounded-md
                   border
                   border-gray-100
-                  rounded-md
-                  overflow-hidden
                   bg-gray-50
                 "
               >
-                {allCategoryMenu.map((category) => (
-                  <Link
-                    key={category}
-                    to={`/category/${encodeURIComponent(category.name)}`}
-                    onClick={() => {
-                      setShowCategories(false);
-                      setShowMenu(false);
-                    }}
-                    className="
-                      group
-                      relative
-                      flex
-                      items-center
-                      gap-3
-                      px-5
-                      py-3
-                      text-sm
-                      text-gray-700
-                      border-b
-                      border-gray-100
-                      last:border-b-0
-                      hover:bg-white
-                      hover:text-blue-600
-                      transition-all
-                      duration-300
-                    "
-                  >
-                    <span
-                      className="
-                        absolute
-                        left-0
-                        top-0
-                        h-full
-                        w-0
-                        bg-blue-600
-                        transition-all
-                        duration-300
-                        group-hover:w-[3px]
-                      "
-                    ></span>
+                <div>
+                  {allCategoryMenu.map((category) => {
+                    const isSelected = selectedCategory === category.name;
 
-                    <i
-                      className={`fa-solid ${category.icon} w-5 text-center text-gray-400 transition-colors duration-300 group-hover:text-blue-600`}
-                    ></i>
+                    return (
+                      <button
+                        key={category.name}
+                        type="button"
+                        onClick={() => setSelectedCategory(category.name)}
+                        className={`group relative flex w-full items-center gap-3 border-b border-gray-100 px-5 py-3 text-left text-sm transition-all duration-300 last:border-b-0 ${
+                          isSelected
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-700 hover:bg-white hover:text-blue-600"
+                        }`}
+                      >
+                        <span
+                          className={`absolute left-0 top-0 h-full bg-blue-600 transition-all duration-300 ${
+                            isSelected ? "w-[3px]" : "w-0 group-hover:w-[3px]"
+                          }`}
+                        ></span>
 
-                    <span className="group-hover:translate-x-1 transition-transform duration-300">
-                      {category.name}
-                    </span>
-                  </Link>
-                ))}
+                        <i
+                          className={`fa-solid ${category.icon} w-5 text-center transition-colors duration-300 ${
+                            isSelected
+                              ? "text-blue-600"
+                              : "text-gray-400 group-hover:text-blue-600"
+                          }`}
+                        ></i>
+
+                        <span className="flex-1 transition-transform duration-300 group-hover:translate-x-1">
+                          {category.name}
+                        </span>
+
+                        <i
+                          className={`fa-solid fa-chevron-right text-xs transition-all duration-300 ${
+                            isSelected
+                              ? "translate-x-1 text-blue-600"
+                              : "text-gray-300 group-hover:translate-x-1 group-hover:text-blue-600"
+                          }`}
+                        ></i>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Mobile / Tablet Product Preview */}
+                <div className="border-t border-gray-200 bg-white p-4">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h3 className="truncate text-base font-bold text-[#263238]">
+                      {selectedCategory}
+                    </h3>
+
+                    <Link
+                      to={`/category/${encodeURIComponent(selectedCategory)}`}
+                      onClick={() => {
+                        setShowCategories(false);
+                        setShowMenu(false);
+                      }}
+                      className="flex shrink-0 items-center gap-1 text-xs font-semibold text-blue-600 transition-colors hover:text-blue-700"
+                    >
+                      View All
+                      <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                    </Link>
+                  </div>
+
+                  {selectedCategoryProducts.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {selectedCategoryProducts.map((product) => (
+                        <Link
+                          key={product.id}
+                          to={`/category/${encodeURIComponent(selectedCategory)}`}
+                          onClick={() => {
+                            setShowCategories(false);
+                            setShowMenu(false);
+                          }}
+                          className="group overflow-hidden rounded-lg border border-gray-100 bg-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                          <div className="flex h-24 items-center justify-center bg-white p-2 sm:h-28">
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                            />
+                          </div>
+
+                          <div className="px-2 pb-3 text-center">
+                            <h4 className="truncate text-xs font-semibold text-gray-800">
+                              {product.name}
+                            </h4>
+                            <p className="mt-1 text-[11px] text-gray-500">
+                              {product.weight}
+                            </p>
+                            <p className="mt-1 text-xs font-semibold text-blue-600">
+                              {product.price}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center text-xs text-gray-400">
+                      No products available in this category.
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
