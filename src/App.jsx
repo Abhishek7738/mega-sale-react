@@ -26,6 +26,7 @@ import CartPage from "./Pages/CartPage";
 import CheckoutPage from "./Pages/CheckoutPage";
 
 import { CartProvider } from "./context/CartContext";
+import BackendTest from "./BackendTest";
 
 function MainLayout() {
   return (
@@ -73,6 +74,8 @@ function HomePage() {
       <NewArrivalsSection />
 
       <FeaturedBlogSection />
+
+      <BackendTest />
     </div>
   );
 }

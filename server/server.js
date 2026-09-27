@@ -13,6 +13,19 @@ app.get("/api/health", (req, res) => {
     });
 });
 
+app.get("/api/products", (req, res) => {
+    res.json([
+        {
+            name:"Organic Orange",
+            price: 228.78,
+        },
+        {
+            name:"Fresh Milk",
+            price: 68.00,
+        }
+    ]);
+});
+
 app.listen(port, () => {
 
     console.log(`Server is running on http://localhost:${port}`);

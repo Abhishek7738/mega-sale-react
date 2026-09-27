@@ -1,15 +1,25 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function BackendTest() {
+  const [products, setProducts] = useState([]);
   useEffect(() => {
-    fetch("http://localhost:5000/api/health")
+    fetch("http://localhost:5000/api/products")
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
+        setProducts(data);
       });
   }, []);
 
-  return <h2>Backend Test</h2>;
+ return (
+  <div>
+    {products.map((product) => (
+      <div key={product.name}>
+        <h2>{product.name}</h2>
+        <p>{product.price}</p>
+      </div>
+    ))}
+  </div>
+);
 }
 
 export default BackendTest;
