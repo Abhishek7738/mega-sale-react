@@ -31,7 +31,16 @@ app.get("/api/products", (req, res) => {
 });
 
 app.post("/api/products", (req, res) => {
-    console.log(req.body);
+    Product.create(req.body)
+        .then((product) => {
+            res.status(201).json(product);
+        })
+        .catch((error) => {
+            res.status(500).json({
+                message: "Error creating product",
+                error: error.message
+            });
+        });
 });
 
 app.listen(port, () => {
