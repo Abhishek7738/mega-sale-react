@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ProductCard from "./components/ProductCard";
 
 function BackendTest() {
   const [products, setProducts] = useState([]);
@@ -10,16 +11,14 @@ function BackendTest() {
       });
   }, []);
 
- return (
+return (
   <div>
     {products.map((product) => (
-      <div key={product.name}>
-        <h2>{product.name}</h2>
-        <p>{product.price}</p>
-      </div>
+      <ProductCard key={product._id} {...product} />
     ))}
   </div>
 );
 }
+
 
 export default BackendTest;

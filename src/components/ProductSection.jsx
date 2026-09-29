@@ -1,13 +1,16 @@
+import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
-import products from "../data/products";
-
-const fruitVegetableProducts = products.filter((product) =>
-  ["prod-orange", "prod-cabbage", "prod-onion", "prod-capsicum"].includes(
-    product.id,
-  ),
-);
 
 function ProductSection() {
+  const [products, setProducts] = useState([]);
+  useEffect(() => {
+    fetch("http://localhost:5000/api/products")
+      .then((response) => response.json())
+      .then((data) => {
+        setProducts(data);
+      });
+  }, []);
+
   return (
     <section className="w-full bg-[#f8fafc]">
       <div className="mx-auto w-full max-w-[1140px] px-4 py-8 sm:px-6 md:px-8 lg:px-0">
@@ -22,10 +25,10 @@ function ProductSection() {
 
         {/* Product Grid */}
         <div className="grid w-full grid-cols-1 justify-items-center gap-x-3 gap-y-5 sm:grid-cols-2 lg:grid-cols-4 lg:justify-items-start">
-         {fruitVegetableProducts.map((product) => (
+          {products.map((product) => (
             <ProductCard
-              key={product.id}
-              id={product.id}
+              key={product._id}
+              id={product._id}
               name={product.name}
               weight={product.weight}
               price={product.price}
