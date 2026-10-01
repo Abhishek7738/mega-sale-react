@@ -27,6 +27,7 @@ import CheckoutPage from "./Pages/CheckoutPage";
 
 import { CartProvider } from "./context/CartContext";
 import BackendTest from "./BackendTest";
+import LoginPage from "./Pages/LoginPage";
 
 function MainLayout() {
   return (
@@ -93,6 +94,8 @@ function App() {
             <Route path="cart" element={<CartPage />} />
 
             <Route path="checkout" element={<CheckoutPage />} />
+
+            <Route path="login" element={<LoginPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

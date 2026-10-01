@@ -24,10 +24,12 @@ function Navbar() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const clickedInsideDesktop =
-        categoriesRef.current?.contains(event.target);
-      const clickedInsideMobile =
-        mobileCategoriesRef.current?.contains(event.target);
+      const clickedInsideDesktop = categoriesRef.current?.contains(
+        event.target,
+      );
+      const clickedInsideMobile = mobileCategoriesRef.current?.contains(
+        event.target,
+      );
 
       if (!clickedInsideDesktop && !clickedInsideMobile) {
         setShowCategories(false);
@@ -330,12 +332,13 @@ function Navbar() {
                 )}
               </Link>
 
-              <button
+              <Link
+                to="/login"
                 aria-label="Account"
-                className="w-11 xl:w-12 h-10 text-gray-600 hover:text-blue-600 transition"
+                className="flex w-11 xl:w-12 h-10 items-center justify-center text-gray-600 hover:text-blue-600 transition"
               >
-                <i className="fa-regular fa-user"></i>
-              </button>
+                <i className="fa-solid fa-user"></i>
+              </Link>
             </div>
 
             {/* Mobile / Tablet Menu Button */}
