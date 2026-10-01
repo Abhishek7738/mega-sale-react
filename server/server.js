@@ -7,6 +7,7 @@ const Product = require("./models/Product");
 const User = require("./models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const authMiddleware = require("./middleware/auth");
 
 app.use(cors());
 app.use(express.json());
@@ -103,6 +104,13 @@ app.post("/api/login", (req, res) => {
 
                 });
         });
+});
+
+app.get("/api/profile", authMiddleware, (req, res) => {
+    res.json({
+        message: "Profile accessed successfully",
+        user: req.user
+    });
 });
 
 app.listen(port, () => {
