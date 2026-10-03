@@ -26,6 +26,7 @@ import CartPage from "./Pages/CartPage";
 import CheckoutPage from "./Pages/CheckoutPage";
 
 import { CartProvider } from "./context/CartContext";
+import { AuthProvider } from "./context/AuthContext";
 import BackendTest from "./BackendTest";
 import LoginPage from "./Pages/LoginPage";
 
@@ -82,25 +83,25 @@ function HomePage() {
 }
 
 function App() {
-  return (
+ return (
+  <AuthProvider>
     <CartProvider>
       <BrowserRouter>
         <Routes>
-          <Route  element={<MainLayout />}>
+          <Route element={<MainLayout />}>
             <Route index element={<HomePage />} />
-
-            <Route path="category/:categoryName" element={<CategoryPage />} />
-
+            <Route
+              path="category/:categoryName"
+              element={<CategoryPage />}
+            />
             <Route path="cart" element={<CartPage />} />
-
             <Route path="checkout" element={<CheckoutPage />} />
-
             <Route path="login" element={<LoginPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
     </CartProvider>
-  );
-}
+  </AuthProvider>
+)};
 
 export default App;

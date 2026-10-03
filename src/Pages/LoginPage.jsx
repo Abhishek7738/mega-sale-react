@@ -1,22 +1,33 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
+  if (loading) return;
+
+  setError("");
+  setLoading(true);
+
+  try {
     const response = await fetch("http://localhost:5000/api/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email: email,
-        password: password,
+        email,
+        password,
       }),
     });
 
@@ -24,13 +35,20 @@ function LoginPage() {
 
     if (response.ok) {
       localStorage.setItem("token", data.token);
+       login(data.user);
       console.log("Login successful");
 
       navigate("/");
     } else {
-      console.log(data.message);
+      setError(data.message || "Login failed");
     }
-  };
+  } catch (error) {
+    console.error("Login error:", error);
+    setError("Unable to connect to the server. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="bg-gray-50 px-4 py-8">
@@ -40,8 +58,8 @@ function LoginPage() {
           <h1 className="text-4xl font-bold">Shop Smarter.</h1>
 
           <p className="mt-4 max-w-md text-lg text-blue-100">
-            Discover fresh products, better deals and everything you need in one
-            place.
+            Discover fresh products, better deals and everything you need in
+            one place.
           </p>
         </div>
 
@@ -50,7 +68,9 @@ function LoginPage() {
           <form onSubmit={handleLogin} className="w-full max-w-sm">
             {/* Heading */}
             <div className="mb-8 text-center">
-              <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
+              <h2 className="text-3xl font-bold text-gray-900">
+                Welcome Back
+              </h2>
 
               <p className="mt-2 text-sm text-gray-500">
                 Login to continue shopping with Megasale
@@ -105,12 +125,20 @@ function LoginPage() {
               </div>
             </div>
 
+            {/* Error */}
+            {error && (
+              <p className="mt-2 text-sm text-red-500">
+                {error}
+              </p>
+            )}
+
             {/* Login button */}
             <button
               type="submit"
-              className="mt-2 w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+              disabled={loading}
+              className="mt-2 w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </button>
           </form>
         </div>
