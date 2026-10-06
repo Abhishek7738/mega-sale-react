@@ -29,6 +29,7 @@ import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import BackendTest from "./BackendTest";
 import LoginPage from "./Pages/LoginPage";
+import SignupPage from "./Pages/SignupPage";
 
 function MainLayout() {
   return (
@@ -97,6 +98,7 @@ function App() {
             <Route path="cart" element={<CartPage />} />
             <Route path="checkout" element={<CheckoutPage />} />
             <Route path="login" element={<LoginPage />} />
+            <Route path="signup" element={<SignupPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

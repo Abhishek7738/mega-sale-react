@@ -1,3 +1,4 @@
+import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -11,6 +12,8 @@ function Navbar() {
     increaseQuantity,
     decreaseQuantity,
   } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [search, setSearch] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
@@ -332,13 +335,52 @@ function Navbar() {
                 )}
               </Link>
 
-              <Link
-                to="/login"
-                aria-label="Account"
-                className="flex w-11 xl:w-12 h-10 items-center justify-center text-gray-600 hover:text-blue-600 transition"
-              >
-                <i className="fa-solid fa-user"></i>
-              </Link>
+              {isAuthenticated ? (
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-label="Account"
+                    onClick={() => setShowAccountMenu((current) => !current)}
+                    className="flex w-11 xl:w-12 h-10 items-center justify-center text-gray-600 hover:text-blue-600 transition"
+                  >
+                    <i className="fa-solid fa-user"></i>
+                  </button>
+
+                  {showAccountMenu && (
+                    <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-gray-100 bg-white p-4 shadow-xl">
+                      <div className="border-b border-gray-100 pb-3">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {user?.name || "My Account"}
+                        </p>
+
+                        <p className="mt-1 truncate text-xs text-gray-500">
+                          {user?.email}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          logout();
+                          setShowAccountMenu(false);
+                        }}
+                        className="mt-3 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                      >
+                        <i className="fa-solid fa-right-from-bracket mr-2"></i>
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  aria-label="Account"
+                  className="flex w-11 xl:w-12 h-10 items-center justify-center text-gray-600 hover:text-blue-600 transition"
+                >
+                  <i className="fa-solid fa-user"></i>
+                </Link>
+              )}
             </div>
 
             {/* Mobile / Tablet Menu Button */}
@@ -1128,12 +1170,52 @@ function Navbar() {
               )}
             </Link>
 
-            <button
-              aria-label="Account"
-              className="text-gray-600 hover:text-blue-600 transition"
-            >
-              <i className="fa-regular fa-user"></i>
-            </button>
+            {isAuthenticated ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-label="Account"
+                  onClick={() => setShowAccountMenu((current) => !current)}
+                  className="text-gray-600 hover:text-blue-600 transition"
+                >
+                  <i className="fa-regular fa-user"></i>
+                </button>
+
+                {showAccountMenu && (
+                  <div className="absolute right-0 bottom-full z-50 mb-2 w-56 rounded-xl border border-gray-100 bg-white p-4 shadow-xl">
+                    <div className="border-b border-gray-100 pb-3">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {user?.name || "My Account"}
+                      </p>
+
+                      <p className="mt-1 truncate text-xs text-gray-500">
+                        {user?.email}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        logout();
+                        setShowAccountMenu(false);
+                      }}
+                      className="mt-3 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                    >
+                      <i className="fa-solid fa-right-from-bracket mr-2"></i>
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                aria-label="Account"
+                className="text-gray-600 hover:text-blue-600 transition"
+              >
+                <i className="fa-regular fa-user"></i>
+              </Link>
+            )}
           </div>
         </div>
       )}
