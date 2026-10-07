@@ -6,6 +6,7 @@ const app = express();
 const mongoose = require("mongoose");
 const Product = require("./models/Product");
 const User = require("./models/User");
+const Order = require("./models/Order");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const authMiddleware = require("./middleware/auth");
@@ -34,28 +35,6 @@ app.get("/api/health", (req, res) => {
         message: "Backend is running successfully"
     });
 });
-app.get("/api/test-email", async (req, res) => {
-    try {
-        await sendEmail({
-            to: process.env.EMAIL_USER,
-            subject: "Mega Sale Email Test",
-            text: "This is a test email from your Mega Sale backend.",
-            html: "<h2>Mega Sale Email Test</h2><p>Your email configuration is working successfully.</p>",
-        });
-
-        res.json({
-            message: "Test email sent successfully"
-        });
-    } catch (error) {
-        console.error("Email sending error:", error);
-
-        res.status(500).json({
-            message: "Failed to send test email",
-            error: error.message
-        });
-    }
-});
-
 // Get Products
 app.get("/api/products", (req, res) => {
     Product.find()
@@ -323,6 +302,72 @@ app.get("/api/profile", authMiddleware, (req, res) => {
                 error: error.message
             });
         });
+});
+// Create Order route
+app.post("/api/orders", authMiddleware, async (req, res) => {
+    try {
+        const {
+            items,
+            customer,
+            subtotal,
+            deliveryCharge,
+            total,
+            paymentMethod,
+        } = req.body;
+
+        if (
+            !items ||
+            items.length === 0 ||
+            !customer ||
+            !customer.name ||
+            !customer.email ||
+            !customer.phone ||
+            !customer.address
+        ) {
+            return res.status(400).json({
+                message: "Complete order details are required",
+            });
+        }
+
+        const order = await Order.create({
+            user: req.user.userId,
+            items,
+            customer,
+            subtotal,
+            deliveryCharge,
+            total,
+            paymentMethod,
+        });
+
+        res.status(201).json({
+            message: "Order placed successfully",
+            order,
+        });
+    } catch (error) {
+        console.error("Create order error:", error);
+
+        res.status(500).json({
+            message: "Error creating order",
+        });
+    }
+});
+// Get logged-in user's orders
+app.get("/api/orders", authMiddleware, async (req, res) => {
+    try {
+        const orders = await Order.find({
+           user: req.user.userId,
+        }).sort({ createdAt: -1 });
+
+        res.json({
+            orders,
+        });
+    } catch (error) {
+        console.error("Get orders error:", error);
+
+        res.status(500).json({
+            message: "Error fetching orders",
+        });
+    }
 });
 
 // Start Server

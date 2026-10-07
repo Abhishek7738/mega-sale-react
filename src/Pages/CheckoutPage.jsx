@@ -1,8 +1,19 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { useNavigate } from "react-router-dom";
 
 function CheckoutPage() {
   const { cartItems } = useCart();
+  const navigate = useNavigate();
+  const [customer, setCustomer] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+  });
+
+  const [paymentMethod, setPaymentMethod] = useState("cod");
 
   const getPrice = (price) => {
     return Number(String(price).replace(/[^\d.]/g, ""));
@@ -14,6 +25,45 @@ function CheckoutPage() {
 
   const deliveryCharge = subtotal > 0 ? 40 : 0;
   const totalAmount = subtotal + deliveryCharge;
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch("http://localhost:5000/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items: cartItems.map((item) => ({
+            product: item.id,
+            name: item.name,
+            price: getPrice(item.price),
+            quantity: item.quantity,
+          })),
+          customer,
+          subtotal,
+          deliveryCharge,
+          total: totalAmount,
+          paymentMethod,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Order placed successfully:", data);
+        navigate("/orders");
+      } else {
+        console.error("Order failed:", data);
+      }
+    } catch (error) {
+      console.error("Order error:", error);
+    }
+  };
 
   if (cartItems.length === 0) {
     return (
@@ -43,9 +93,7 @@ function CheckoutPage() {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-8 text-3xl font-bold text-gray-800">
-          Checkout
-        </h1>
+        <h1 className="mb-8 text-3xl font-bold text-gray-800">Checkout</h1>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Customer Details */}
@@ -54,7 +102,7 @@ function CheckoutPage() {
               Delivery Details
             </h2>
 
-            <form className="space-y-5">
+            <form onSubmit={handlePlaceOrder} className="space-y-5">
               <div>
                 <label className="mb-2 block font-semibold text-gray-700">
                   Full Name
@@ -63,6 +111,13 @@ function CheckoutPage() {
                 <input
                   type="text"
                   placeholder="Enter your full name"
+                  value={customer.name}
+                  onChange={(e) =>
+                    setCustomer({
+                      ...customer,
+                      name: e.target.value,
+                    })
+                  }
                   className="w-full rounded-md border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
                   required
                 />
@@ -76,6 +131,13 @@ function CheckoutPage() {
                 <input
                   type="email"
                   placeholder="Enter your email"
+                  value={customer.email}
+                  onChange={(e) =>
+                    setCustomer({
+                      ...customer,
+                      email: e.target.value,
+                    })
+                  }
                   className="w-full rounded-md border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
                   required
                 />
@@ -89,6 +151,13 @@ function CheckoutPage() {
                 <input
                   type="tel"
                   placeholder="Enter your phone number"
+                  value={customer.phone}
+                  onChange={(e) =>
+                    setCustomer({
+                      ...customer,
+                      phone: e.target.value,
+                    })
+                  }
                   className="w-full rounded-md border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
                   required
                 />
@@ -102,6 +171,13 @@ function CheckoutPage() {
                 <textarea
                   placeholder="Enter your complete address"
                   rows="4"
+                  value={customer.address}
+                  onChange={(e) =>
+                    setCustomer({
+                      ...customer,
+                      address: e.target.value,
+                    })
+                  }
                   className="w-full rounded-md border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
                   required
                 ></textarea>
@@ -112,7 +188,11 @@ function CheckoutPage() {
                   Payment Method
                 </label>
 
-                <select className="w-full rounded-md border border-gray-300 px-4 py-3 outline-none focus:border-blue-600">
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
+                >
                   <option value="cod">Cash on Delivery</option>
                   <option value="online">Online Payment</option>
                 </select>
@@ -140,9 +220,7 @@ function CheckoutPage() {
                   className="flex justify-between gap-4 border-b pb-3"
                 >
                   <div>
-                    <p className="font-semibold text-gray-800">
-                      {item.name}
-                    </p>
+                    <p className="font-semibold text-gray-800">{item.name}</p>
 
                     <p className="text-sm text-gray-500">
                       Quantity: {item.quantity}
@@ -150,8 +228,7 @@ function CheckoutPage() {
                   </div>
 
                   <p className="font-semibold text-gray-700">
-                    ₹{" "}
-                    {(getPrice(item.price) * item.quantity).toFixed(2)}
+                    ₹ {(getPrice(item.price) * item.quantity).toFixed(2)}
                   </p>
                 </div>
               ))}
