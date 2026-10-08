@@ -33,6 +33,7 @@ import LoginPage from "./Pages/LoginPage";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import SignupPage from "./Pages/SignupPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
+import SearchResultsPage from "./Pages/SearchResultsPage";
 
 function MainLayout() {
   return (
@@ -95,6 +96,7 @@ function App() {
             <Route element={<MainLayout />}>
               <Route index element={<HomePage />} />
               <Route path="category/:categoryName" element={<CategoryPage />} />
+              <Route path="search" element={<SearchResultsPage />} />
               <Route path="cart" element={<CartPage />} />
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="orders" element={<OrdersPage />} />

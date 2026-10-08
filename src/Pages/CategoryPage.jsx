@@ -1,15 +1,25 @@
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
-import products from "../data/products";
 
 function CategoryPage() {
   const { categoryName } = useParams();
 
   const formattedCategory = decodeURIComponent(categoryName).replace(/-/g, " ");
 
-  const categoryProducts = products.filter((product) =>
-    product.categories?.includes(formattedCategory.toLowerCase()),
-  );
+  const [categoryProducts, setCategoryProducts] = useState([]);
+
+  useEffect(() => {
+    fetch(
+  `http://localhost:5000/api/products?category=${encodeURIComponent(
+    formattedCategory.toLowerCase()
+  )}`,
+)
+      .then((response) => response.json())
+      .then((data) => {
+        setCategoryProducts(data);
+      });
+  }, [formattedCategory]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,7 +51,16 @@ function CategoryPage() {
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {categoryProducts.map((product) => (
-            <ProductCard key={product.id} {...product} />
+            <ProductCard
+              key={product._id}
+              id={product._id}
+              name={product.name}
+              weight={product.weight}
+              price={product.price}
+              oldPrice={product.oldPrice}
+              image={product.image}
+              featured={product.featured}
+            />
           ))}
         </div>
       </main>

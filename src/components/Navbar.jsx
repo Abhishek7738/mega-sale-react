@@ -1,10 +1,11 @@
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import productCatalog from "../data/products";
 
 function Navbar() {
+  const navigate = useNavigate();
   const {
     cartCount,
     cartItems,
@@ -16,6 +17,8 @@ function Navbar() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [search, setSearch] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  // Search products
+  const [searchResults, setSearchResults] = useState([]);
 
   // Mobile / Tablet main menu
   const [showMenu, setShowMenu] = useState(false);
@@ -45,6 +48,24 @@ function Navbar() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+  useEffect(() => {
+    if (search.trim() === "") {
+      setSearchResults([]);
+      return;
+    }
+
+    fetch(
+      `http://localhost:5000/api/products?search=${encodeURIComponent(search)}`,
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        setSearchResults(data);
+      })
+      .catch((error) => {
+        console.error("Search error:", error);
+        setSearchResults([]);
+      });
+  }, [search]);
 
   const [selectedCategory, setSelectedCategory] = useState(
     "Milk & Dairy Products",
@@ -56,9 +77,6 @@ function Navbar() {
   // Thunder's Deals..
   const [showDeals, setShowDeals] = useState(false);
   const [dealIndex, setDealIndex] = useState(0);
-
-  // Search products
-  const products = ["Almonds", "Cashews", "Pistachios", "Walnuts"];
 
   // Main navigation links
   const navLinks = [
@@ -143,9 +161,7 @@ function Navbar() {
   const currentQuantity =
     cartItems.find((item) => item.id === currentDeal.id)?.quantity || 0;
 
-  const filteredProducts = products.filter((product) =>
-    product.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredProducts = searchResults;
 
   const selectedCategoryProducts = productCatalog
     .filter((product) =>
@@ -233,6 +249,15 @@ function Navbar() {
 
                 <button
                   type="button"
+                  onClick={() => {
+                    if (!search.trim()) return;
+
+                    setShowSearchDropdown(false);
+
+                    navigate(
+                      `/search?query=${encodeURIComponent(search.trim())}`,
+                    );
+                  }}
                   className="
                     w-[48px]
                     sm:w-[55px]
@@ -274,10 +299,10 @@ function Navbar() {
                   {filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => (
                       <button
-                        key={product}
+                        key={product._id}
                         type="button"
                         onClick={() => {
-                          setSearch(product);
+                          setSearch(product.name);
                           setShowSearchDropdown(false);
                         }}
                         className="
@@ -293,7 +318,7 @@ function Navbar() {
                           transition
                         "
                       >
-                        {product}
+                        {product.name}
                       </button>
                     ))
                   ) : (

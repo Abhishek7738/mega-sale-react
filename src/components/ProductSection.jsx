@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 
-function ProductSection() {
+function ProductSection({ category }) {
   const [products, setProducts] = useState([]);
   useEffect(() => {
-    fetch("http://localhost:5000/api/products")
+    const url = category
+      ? `http://localhost:5000/api/products?category=${encodeURIComponent(category)}`
+      : "http://localhost:5000/api/products";
+
+    fetch(url)
       .then((response) => response.json())
       .then((data) => {
         setProducts(data);
       });
-  }, []);
+  }, [category]);
 
   return (
     <section className="w-full bg-[#f8fafc]">

@@ -37,7 +37,22 @@ app.get("/api/health", (req, res) => {
 });
 // Get Products
 app.get("/api/products", (req, res) => {
-    Product.find()
+    const { category, search } = req.query;
+
+    const filter = {};
+
+    if (category) {
+        filter.categories = category;
+    }
+
+    if (search) {
+        filter.name = {
+            $regex: search,
+            $options: "i"
+        };
+    }
+
+    Product.find(filter)
         .then((products) => {
             res.json(products);
         })
@@ -61,6 +76,29 @@ app.post("/api/products", (req, res) => {
                 error: error.message
             });
         });
+});
+// Update Product
+app.put("/api/products/:id", async (req, res) => {
+    try {
+        const product = await Product.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!product) {
+            return res.status(404).json({
+                message: "Product not found"
+            });
+        }
+
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({
+            message: "Error updating product",
+            error: error.message
+        });
+    }
 });
 
 // Register User
@@ -355,7 +393,7 @@ app.post("/api/orders", authMiddleware, async (req, res) => {
 app.get("/api/orders", authMiddleware, async (req, res) => {
     try {
         const orders = await Order.find({
-           user: req.user.userId,
+            user: req.user.userId,
         }).sort({ createdAt: -1 });
 
         res.json({
