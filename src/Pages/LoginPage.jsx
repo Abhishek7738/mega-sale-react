@@ -36,7 +36,12 @@ function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("token", data.token);
+        if (rememberMe) {
+          localStorage.setItem("token", data.token);
+        } else {
+          sessionStorage.setItem("token", data.token);
+        }
+
         login(data.user);
 
         console.log("Login successful");
@@ -266,13 +271,6 @@ function LoginPage() {
                   >
                     Password
                   </label>
-
-                  <Link
-                    to="/forgot-password"
-                    className="text-xs font-bold text-orange-600 transition hover:text-orange-700 sm:text-sm"
-                  >
-                    Forgot Password?
-                  </Link>
                 </div>
 
                 <div className="relative">
@@ -333,7 +331,7 @@ function LoginPage() {
               </div>
 
               {/* Remember */}
-              <div className="mb-5 flex items-center">
+              <div className="mb-5 flex items-center justify-between">
                 <label className="flex cursor-pointer items-center gap-2 text-sm text-stone-500">
                   <input
                     type="checkbox"
@@ -344,6 +342,12 @@ function LoginPage() {
 
                   <span>Remember me</span>
                 </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-bold text-orange-600 transition hover:text-orange-700 sm:text-sm"
+                >
+                  Forgot Password?
+                </Link>
               </div>
 
               {/* Login Button */}
@@ -380,43 +384,6 @@ function LoginPage() {
                     <i className="fa-solid fa-arrow-right text-xs transition-transform duration-300 group-hover:translate-x-1" />
                   </>
                 )}
-              </button>
-
-              {/* Divider */}
-              <div className="my-5 flex items-center gap-3">
-                <div className="h-px flex-1 bg-stone-200" />
-
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
-                  or continue with
-                </span>
-
-                <div className="h-px flex-1 bg-stone-200" />
-              </div>
-
-              {/* Google */}
-              <button
-                type="button"
-                onClick={() => {
-                  // Google OAuth will be connected later.
-                }}
-                className="
-                  flex h-12 w-full
-                  items-center justify-center gap-3
-                  rounded-xl
-                  border border-stone-200
-                  bg-white
-                  px-4
-                  text-sm font-bold text-stone-700
-                  transition-all duration-200
-                  hover:-translate-y-0.5
-                  hover:border-orange-200
-                  hover:bg-orange-50
-                "
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-stone-200 bg-white">
-                  <i className="fa-brands fa-google text-sm text-[#DB4437]" />
-                </span>
-                Continue with Google
               </button>
             </form>
 
