@@ -28,7 +28,6 @@ import OrdersPage from "./Pages/OrdersPage";
 
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
-import BackendTest from "./BackendTest";
 import LoginPage from "./Pages/LoginPage";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import SignupPage from "./Pages/SignupPage";
@@ -56,7 +55,7 @@ function HomePage() {
 
       <Categories />
 
-      <ProductSection />
+      <ProductSection category="vegetables & fruits" />
 
       <OfferSection />
 
@@ -81,8 +80,6 @@ function HomePage() {
       <NewArrivalsSection />
 
       <FeaturedBlogSection />
-
-      <BackendTest />
     </div>
   );
 }

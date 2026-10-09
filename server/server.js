@@ -342,53 +342,142 @@ app.get("/api/profile", authMiddleware, (req, res) => {
         });
 });
 // Create Order route
+
 app.post("/api/orders", authMiddleware, async (req, res) => {
     try {
         const {
             items,
             customer,
-            subtotal,
-            deliveryCharge,
-            total,
             paymentMethod,
         } = req.body;
 
+        // 1. Validate required order details
         if (
-            !items ||
+            !Array.isArray(items) ||
             items.length === 0 ||
             !customer ||
-            !customer.name ||
-            !customer.email ||
-            !customer.phone ||
-            !customer.address
+            !customer.name?.trim() ||
+            !customer.email?.trim() ||
+            !customer.phone?.trim() ||
+            !customer.address?.trim()
         ) {
             return res.status(400).json({
                 message: "Complete order details are required",
             });
         }
 
+        // 2. Validate each product ID and quantity
+        for (const item of items) {
+            if (
+                !item.product ||
+                !mongoose.isValidObjectId(item.product) ||
+                !Number.isSafeInteger(item.quantity) ||
+                item.quantity < 1
+            ) {
+                return res.status(400).json({
+                    message: "Invalid product ID or quantity",
+                });
+            }
+        }
+
+        // 3. Get actual product prices from MongoDB
+        const productIds = items.map((item) => item.product);
+
+        const products = await Product.find({
+            _id: { $in: productIds },
+        });
+
+        const productMap = new Map(
+            products.map((product) => [
+                product._id.toString(),
+                product,
+            ])
+        );
+
+        // 4. Recalculate prices and subtotal on the backend
+        let calculatedSubtotal = 0;
+        const validatedItems = [];
+
+        for (const item of items) {
+            const product = productMap.get(
+                item.product.toString()
+            );
+
+            if (!product) {
+                return res.status(400).json({
+                    message: "One or more products were not found",
+                });
+            }
+
+            if (
+                !Number.isFinite(product.price) ||
+                product.price < 0
+            ) {
+                return res.status(400).json({
+                    message: "Invalid product price in database",
+                });
+            }
+
+            const itemTotal = product.price * item.quantity;
+
+            if (!Number.isSafeInteger(itemTotal)) {
+                return res.status(400).json({
+                    message: "Invalid order amount",
+                });
+            }
+
+            calculatedSubtotal += itemTotal;
+
+            validatedItems.push({
+                product: product._id,
+                name: product.name,
+                price: product.price,
+                quantity: item.quantity,
+            });
+        }
+
+        if (!Number.isSafeInteger(calculatedSubtotal)) {
+            return res.status(400).json({
+                message: "Invalid order subtotal",
+            });
+        }
+
+        // 5. Apply the existing ₹40 delivery rule
+        const calculatedDeliveryCharge =
+            calculatedSubtotal > 0 ? 40 : 0;
+
+        const calculatedTotal =
+            calculatedSubtotal + calculatedDeliveryCharge;
+
+        // 6. Save only backend-calculated amounts
         const order = await Order.create({
             user: req.user.userId,
-            items,
-            customer,
-            subtotal,
-            deliveryCharge,
-            total,
+            items: validatedItems,
+            customer: {
+                name: customer.name.trim(),
+                email: customer.email.trim(),
+                phone: customer.phone.trim(),
+                address: customer.address.trim(),
+            },
+            subtotal: calculatedSubtotal,
+            deliveryCharge: calculatedDeliveryCharge,
+            total: calculatedTotal,
             paymentMethod,
         });
 
-        res.status(201).json({
+        return res.status(201).json({
             message: "Order placed successfully",
             order,
         });
     } catch (error) {
         console.error("Create order error:", error);
 
-        res.status(500).json({
+        return res.status(500).json({
             message: "Error creating order",
         });
     }
 });
+
 // Get logged-in user's orders
 app.get("/api/orders", authMiddleware, async (req, res) => {
     try {

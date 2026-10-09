@@ -1,17 +1,39 @@
+import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
-import products from "../data/products";
 
-const breakfastDairyProducts = products.filter((product) =>
-  [
-    "prod-ghee",
-    "prod-milk",
-    "prod-dahi",
-    "prod-bread",
-    "prod-butter",
-    "prod-mix-fruit-jam",
-  ].includes(product.id),
-);
 function BreakfastDairySection() {
+  const [breakfastDairyProducts, setBreakfastDairyProducts] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/products")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch breakfast and dairy products");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        const productNames = [
+          "Pure Cow Ghee",
+          "Fresh Milk",
+          "Fresh Dahi",
+          "Fresh Butter",
+          "Fresh Bread",
+          "Mixed Fruit Jam",
+        ];
+
+        setBreakfastDairyProducts(
+          productNames
+            .map((name) => data.find((product) => product.name === name))
+            .filter(Boolean),
+        );
+      })
+      .catch((error) => {
+        console.error("Breakfast & Dairy error:", error);
+        setBreakfastDairyProducts([]);
+      });
+  }, []);
+
   return (
     <section className="w-full bg-[#fffaf2] py-12">
       <div className="mx-auto w-[90%] max-w-6xl">
@@ -21,13 +43,24 @@ function BreakfastDairySection() {
           </h2>
           <div className="mt-2 h-1 w-12 bg-blue-600"></div>
         </div>
-        <div className=" grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-6">
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-6">
           {breakfastDairyProducts.map((product) => (
-            <ProductCard key={product.id} {...product} />
+            <ProductCard
+              key={product._id}
+              id={product._id}
+              name={product.name}
+              weight={product.weight}
+              price={product.price}
+              oldPrice={product.oldPrice}
+              image={product.image}
+              featured={product.featured}
+            />
           ))}
         </div>
       </div>
     </section>
   );
 }
+
 export default BreakfastDairySection;

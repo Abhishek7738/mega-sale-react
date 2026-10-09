@@ -67,9 +67,35 @@ function Navbar() {
       });
   }, [search]);
 
-  const [selectedCategory, setSelectedCategory] = useState(
-    "Milk & Dairy Products",
-  );
+  
+const [selectedCategory, setSelectedCategory] = useState(
+  "Milk & Dairy Products",
+);
+
+const [selectedCategoryProducts, setSelectedCategoryProducts] = useState([]);
+
+useEffect(() => {
+  fetch(
+    `http://localhost:5000/api/products?category=${encodeURIComponent(
+      selectedCategory.toLowerCase()
+    )}`
+  )
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch category products");
+      }
+
+      return response.json();
+    })
+    .then((data) => {
+      setSelectedCategoryProducts(data.slice(0, 4));
+    })
+    .catch((error) => {
+      console.error("Category preview error:", error);
+      setSelectedCategoryProducts([]);
+    });
+}, [selectedCategory]);
+
 
   // Navigation links inside Menu
   const [showNavMenu, setShowNavMenu] = useState(false);
@@ -163,11 +189,6 @@ function Navbar() {
 
   const filteredProducts = searchResults;
 
-  const selectedCategoryProducts = productCatalog
-    .filter((product) =>
-      product.categories?.includes(selectedCategory.toLowerCase()),
-    )
-    .slice(0, 4);
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white shadow-sm border-b border-gray-100">
