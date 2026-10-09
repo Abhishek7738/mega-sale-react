@@ -4,7 +4,7 @@ import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
 
 function CheckoutPage() {
-  const { cartItems } = useCart();
+  const { cartItems, clearCart } = useCart();
   const navigate = useNavigate();
   const [customer, setCustomer] = useState({
     name: "",
@@ -66,6 +66,7 @@ if (!token) {
 
       if (response.ok) {
         console.log("Order placed successfully:", data);
+        clearCart();
         navigate("/orders");
       } else {
         console.error("Order failed:", data);
