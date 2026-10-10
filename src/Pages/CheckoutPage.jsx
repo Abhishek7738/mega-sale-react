@@ -63,12 +63,21 @@ if (!token) {
       });
 
       const data = await response.json();
+      
+if (response.ok) {
+  console.log("Order placed successfully:", data);
 
-      if (response.ok) {
-        console.log("Order placed successfully:", data);
-        clearCart();
-        navigate("/orders");
-      } else {
+  clearCart();
+
+  navigate("/thank-you", {
+    state: {
+      order: data.order,
+    },
+  });
+}
+
+
+       else {
         console.error("Order failed:", data);
       }
     } catch (error) {

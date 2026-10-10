@@ -67,35 +67,33 @@ function Navbar() {
       });
   }, [search]);
 
-  
-const [selectedCategory, setSelectedCategory] = useState(
-  "Milk & Dairy Products",
-);
+  const [selectedCategory, setSelectedCategory] = useState(
+    "Milk & Dairy Products",
+  );
 
-const [selectedCategoryProducts, setSelectedCategoryProducts] = useState([]);
+  const [selectedCategoryProducts, setSelectedCategoryProducts] = useState([]);
 
-useEffect(() => {
-  fetch(
-    `http://localhost:5000/api/products?category=${encodeURIComponent(
-      selectedCategory.toLowerCase()
-    )}`
-  )
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Failed to fetch category products");
-      }
+  useEffect(() => {
+    fetch(
+      `http://localhost:5000/api/products?category=${encodeURIComponent(
+        selectedCategory.toLowerCase(),
+      )}`,
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch category products");
+        }
 
-      return response.json();
-    })
-    .then((data) => {
-      setSelectedCategoryProducts(data.slice(0, 4));
-    })
-    .catch((error) => {
-      console.error("Category preview error:", error);
-      setSelectedCategoryProducts([]);
-    });
-}, [selectedCategory]);
-
+        return response.json();
+      })
+      .then((data) => {
+        setSelectedCategoryProducts(data.slice(0, 4));
+      })
+      .catch((error) => {
+        console.error("Category preview error:", error);
+        setSelectedCategoryProducts([]);
+      });
+  }, [selectedCategory]);
 
   // Navigation links inside Menu
   const [showNavMenu, setShowNavMenu] = useState(false);
@@ -188,7 +186,6 @@ useEffect(() => {
     cartItems.find((item) => item.id === currentDeal.id)?.quantity || 0;
 
   const filteredProducts = searchResults;
-
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white shadow-sm border-b border-gray-100">
@@ -403,6 +400,15 @@ useEffect(() => {
                           {user?.email}
                         </p>
                       </div>
+
+                      <Link
+                        to="/profile"
+                        onClick={() => setShowAccountMenu(false)}
+                        className="mt-3 flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-orange-50 hover:text-orange-600"
+                      >
+                        <i className="fa-solid fa-user mr-2"></i>
+                        My Profile
+                      </Link>
 
                       <button
                         type="button"

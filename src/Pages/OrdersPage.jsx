@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 function OrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -148,6 +149,17 @@ function OrdersPage() {
                     </p>
                   </div>
                 </div>
+                
+                <div className="mt-5 border-t border-gray-100 pt-4">
+                  <Link
+                    to={`/track-order/${order._id}`}
+                    className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-orange-600"
+                  >
+                    <i className="fa-solid fa-truck-fast"></i>
+                    Track Order
+                  </Link>
+                </div>
+
               </div>
             ))}
           </div>

@@ -25,6 +25,9 @@ import CategoryPage from "./Pages/CategoryPage";
 import CartPage from "./Pages/CartPage";
 import CheckoutPage from "./Pages/CheckoutPage";
 import OrdersPage from "./Pages/OrdersPage";
+import TrackOrderPage from "./Pages/TrackOrderPage";
+import ThankYouPage from "./Pages/ThankYouPage";
+import ProfilePage from "./Pages/ProfilePage";
 
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -97,6 +100,9 @@ function App() {
               <Route path="cart" element={<CartPage />} />
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="orders" element={<OrdersPage />} />
+              <Route path="track-order/:orderId" element={<TrackOrderPage />} />
+              <Route path="thank-you" element={<ThankYouPage />} />
+              <Route path="profile" element={<ProfilePage />} />
               <Route path="login" element={<LoginPage />} />
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route
