@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,59 @@ function CheckoutPage() {
     phone: "",
     address: "",
   });
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
+
+  useEffect(() => {
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+
+    if (!token) {
+      setProfileError("Please log in to load your saved profile.");
+      setProfileLoading(false);
+      return;
+    }
+
+    const loadCustomerProfile = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Unable to load profile.");
+        }
+
+        const profile = data.user;
+        const address = profile.address || {};
+
+        setCustomer({
+          name: profile.name || "",
+          email: profile.email || "",
+          phone: profile.mobile || "",
+          address: [
+            address.street,
+            address.area,
+            address.city,
+            address.state,
+            address.pincode,
+          ]
+            .filter(Boolean)
+            .join(", "),
+        });
+      } catch (err) {
+        setProfileError(err.message || "Unable to load your saved profile.");
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    loadCustomerProfile();
+  }, []);
 
   const [paymentMethod, setPaymentMethod] = useState("cod");
 
@@ -29,17 +82,14 @@ function CheckoutPage() {
     e.preventDefault();
 
     try {
-      
-const token =
-  localStorage.getItem("token") ||
-  sessionStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
 
-if (!token) {
-  console.error("No authentication token found. Please login again.");
-  navigate("/login");
-  return;
-}
-
+      if (!token) {
+        console.error("No authentication token found. Please login again.");
+        navigate("/login");
+        return;
+      }
 
       const response = await fetch("http://localhost:5000/api/orders", {
         method: "POST",
@@ -63,21 +113,18 @@ if (!token) {
       });
 
       const data = await response.json();
-      
-if (response.ok) {
-  console.log("Order placed successfully:", data);
 
-  clearCart();
+      if (response.ok) {
+        console.log("Order placed successfully:", data);
 
-  navigate("/thank-you", {
-    state: {
-      order: data.order,
-    },
-  });
-}
+        clearCart();
 
-
-       else {
+        navigate("/thank-you", {
+          state: {
+            order: data.order,
+          },
+        });
+      } else {
         console.error("Order failed:", data);
       }
     } catch (error) {
@@ -121,6 +168,17 @@ if (response.ok) {
             <h2 className="mb-6 text-xl font-bold text-gray-800">
               Delivery Details
             </h2>
+            {profileLoading && (
+              <p className="mb-4 text-sm text-gray-500">
+                Loading your saved details...
+              </p>
+            )}
+
+            {profileError && (
+              <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                {profileError}
+              </p>
+            )}
 
             <form onSubmit={handlePlaceOrder} className="space-y-5">
               <div>

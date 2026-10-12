@@ -4,6 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -45,6 +48,9 @@ function SignupPage() {
         body: JSON.stringify({
           name,
           email,
+          mobile,
+          dateOfBirth,
+          gender,
           password,
         }),
       });
@@ -56,6 +62,9 @@ function SignupPage() {
 
         setName("");
         setEmail("");
+        setMobile("");
+        setDateOfBirth("");
+        setGender("");
         setPassword("");
         setConfirmPassword("");
 
@@ -76,7 +85,6 @@ function SignupPage() {
   return (
     <main className="w-full bg-[#fffaf4] px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <div className="relative mx-auto flex w-full max-w-[1450px] overflow-hidden rounded-[24px] bg-white shadow-[0_20px_60px_rgba(120,53,15,0.14)] lg:grid lg:grid-cols-[54%_46%]">
-
         {/* =========================================================
             LEFT SIDE - BRAND / SIGNUP PROMOTIONAL PANEL
         ========================================================== */}
@@ -97,7 +105,6 @@ function SignupPage() {
           <div className="absolute -bottom-28 -left-20 h-80 w-80 rounded-full border border-white/20" />
 
           <div className="relative z-10 flex h-full flex-col justify-between p-8 xl:p-10">
-
             {/* Brand */}
             <div>
               <div className="inline-flex items-center rounded-2xl bg-white px-5 py-3 shadow-lg">
@@ -129,13 +136,12 @@ function SignupPage() {
               </h1>
 
               <p className="mt-4 max-w-md text-sm leading-6 text-white/90">
-                Create your MegaSale account and enjoy a faster,
-                simpler and more convenient shopping experience.
+                Create your MegaSale account and enjoy a faster, simpler and
+                more convenient shopping experience.
               </p>
 
               {/* Benefits */}
               <div className="mt-6 grid max-w-md grid-cols-3 gap-2.5">
-
                 <div className="rounded-2xl border border-white/15 bg-white/15 p-3 backdrop-blur-sm">
                   <i className="fa-solid fa-truck-fast text-lg text-white" />
                   <p className="mt-2 text-xs font-semibold text-white">
@@ -156,7 +162,6 @@ function SignupPage() {
                     Fresh Products
                   </p>
                 </div>
-
               </div>
             </div>
 
@@ -168,7 +173,6 @@ function SignupPage() {
 
               <span>Secure shopping experience</span>
             </div>
-
           </div>
         </section>
 
@@ -177,9 +181,7 @@ function SignupPage() {
         ========================================================== */}
 
         <section className="flex items-center justify-center px-5 py-7 sm:px-8 sm:py-8 lg:px-10 xl:px-12">
-
           <div className="w-full max-w-[460px]">
-
             {/* Mobile Brand */}
             <div className="mb-5 text-center lg:hidden">
               <div className="mx-auto inline-flex items-center rounded-2xl bg-[#fff7ed] px-5 py-3">
@@ -197,7 +199,6 @@ function SignupPage() {
 
             {/* Heading */}
             <div className="mb-5">
-
               <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-[#fff1e6] text-[#ea580c]">
                 <i className="fa-solid fa-user-plus text-base" />
               </div>
@@ -209,7 +210,6 @@ function SignupPage() {
               <p className="mt-1.5 text-sm leading-5 text-stone-500">
                 Join MegaSale and start shopping with us.
               </p>
-
             </div>
 
             {/* Error */}
@@ -229,7 +229,6 @@ function SignupPage() {
             )}
 
             <form onSubmit={handleSignup}>
-
               {/* Full Name */}
               <div className="mb-4">
                 <label
@@ -282,6 +281,76 @@ function SignupPage() {
                 </div>
               </div>
 
+              {/* Mobile Number */}
+              <div className="mb-4">
+                <label
+                  htmlFor="mobile"
+                  className="mb-1.5 block text-sm font-semibold text-stone-700"
+                >
+                  Mobile Number
+                </label>
+
+                <div className="relative">
+                  <i className="fa-solid fa-phone pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+
+                  <input
+                    id="mobile"
+                    name="mobile"
+                    type="tel"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder="Enter your mobile number"
+                    autoComplete="tel"
+                    maxLength={15}
+                    className="h-12 w-full rounded-xl border border-stone-200 bg-[#fffaf7] pl-11 pr-4 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#f97316] focus:bg-white focus:ring-4 focus:ring-orange-500/10"
+                  />
+                </div>
+              </div>
+
+              {/* Date of Birth */}
+              <div className="mb-4">
+                <label
+                  htmlFor="dateOfBirth"
+                  className="mb-1.5 block text-sm font-semibold text-stone-700"
+                >
+                  Date of Birth
+                </label>
+
+                <input
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  max={new Date().toISOString().split("T")[0]}
+                  className="h-12 w-full rounded-xl border border-stone-200 bg-[#fffaf7] px-4 text-sm text-stone-900 outline-none transition focus:border-[#f97316] focus:bg-white focus:ring-4 focus:ring-orange-500/10"
+                />
+              </div>
+
+              {/* Gender */}
+              <div className="mb-4">
+                <label
+                  htmlFor="gender"
+                  className="mb-1.5 block text-sm font-semibold text-stone-700"
+                >
+                  Gender
+                </label>
+
+                <select
+                  id="gender"
+                  name="gender"
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="h-12 w-full rounded-xl border border-stone-200 bg-[#fffaf7] px-4 text-sm text-stone-900 outline-none transition focus:border-[#f97316] focus:bg-white focus:ring-4 focus:ring-orange-500/10"
+                >
+                  <option value="">Select gender (optional)</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                 
+                </select>
+              </div>
+
               {/* Password */}
               <div className="mb-4">
                 <label
@@ -311,9 +380,7 @@ function SignupPage() {
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
-                    onClick={() =>
-                      setShowPassword((current) => !current)
-                    }
+                    onClick={() => setShowPassword((current) => !current)}
                     className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-stone-400 transition hover:bg-orange-50 hover:text-[#ea580c]"
                   >
                     <i
@@ -358,9 +425,7 @@ function SignupPage() {
                   <button
                     type="button"
                     aria-label={
-                      showConfirmPassword
-                        ? "Hide password"
-                        : "Show password"
+                      showConfirmPassword ? "Hide password" : "Show password"
                     }
                     onClick={() =>
                       setShowConfirmPassword((current) => !current)
@@ -396,7 +461,6 @@ function SignupPage() {
                   </>
                 )}
               </button>
-
             </form>
 
             {/* Login Link */}
@@ -415,15 +479,12 @@ function SignupPage() {
               <i className="fa-solid fa-lock" />
               <span>Your information is securely protected</span>
             </div>
-
           </div>
         </section>
-
       </div>
 
       {/* Service Strip */}
       <div className="mx-auto mt-4 grid w-full max-w-[1450px] grid-cols-2 gap-2.5 sm:grid-cols-4">
-
         <div className="flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-3 shadow-sm">
           <i className="fa-solid fa-truck-fast text-[#f97316]" />
           <span className="text-xs font-semibold text-stone-600">
@@ -440,9 +501,7 @@ function SignupPage() {
 
         <div className="flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-3 shadow-sm">
           <i className="fa-solid fa-headset text-[#f97316]" />
-          <span className="text-xs font-semibold text-stone-600">
-            Support
-          </span>
+          <span className="text-xs font-semibold text-stone-600">Support</span>
         </div>
 
         <div className="flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-3 shadow-sm">
@@ -451,7 +510,6 @@ function SignupPage() {
             Easy Returns
           </span>
         </div>
-
       </div>
     </main>
   );

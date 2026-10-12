@@ -410,6 +410,15 @@ function Navbar() {
                         My Profile
                       </Link>
 
+                      <Link
+                        to="/orders"
+                        onClick={() => setShowAccountMenu(false)}
+                        className="mt-1 flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-orange-50 hover:text-orange-600"
+                      >
+                        <i className="fa-solid fa-box mr-2"></i>
+                        My Orders
+                      </Link>
+
                       <button
                         type="button"
                         onClick={() => {

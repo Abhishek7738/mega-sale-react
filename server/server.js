@@ -104,7 +104,14 @@ app.put("/api/products/:id", async (req, res) => {
 // Register User
 app.post("/api/register", async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const {
+            name,
+            email,
+            password,
+            mobile,
+            dateOfBirth,
+            gender,
+        } = req.body;
 
         // Validate required fields
         if (!name || !email || !password) {
@@ -136,6 +143,9 @@ app.post("/api/register", async (req, res) => {
         const user = await User.create({
             name,
             email,
+            mobile,
+            dateOfBirth: dateOfBirth || undefined,
+            gender: gender || undefined,
             password: hashedPassword
         });
 
@@ -330,7 +340,17 @@ app.get("/api/profile", authMiddleware, (req, res) => {
                 user: {
                     id: user._id,
                     name: user.name,
-                    email: user.email
+                    email: user.email,
+                    mobile: user.mobile || "",
+                    dateOfBirth: user.dateOfBirth || null,
+                    gender: user.gender || "",
+                    address: user.address || {
+                        street: "",
+                        area: "",
+                        city: "",
+                        state: "",
+                        pincode: "",
+                    },
                 }
             });
         })
@@ -341,6 +361,110 @@ app.get("/api/profile", authMiddleware, (req, res) => {
             });
         });
 });
+
+app.put("/api/profile", authMiddleware, async (req, res) => {
+    try {
+        const {
+            name,
+            email,
+            mobile,
+            dateOfBirth,
+            gender,
+            address,
+        } = req.body;
+
+        if (!name?.trim() || !email?.trim()) {
+            return res.status(400).json({
+                message: "Name and email are required",
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const existingUser = await User.findOne({
+            email: normalizedEmail,
+            _id: { $ne: req.user.userId },
+        });
+
+        if (existingUser) {
+            return res.status(409).json({
+                message: "This email is already in use",
+            });
+        }
+
+        let parsedDateOfBirth;
+
+        if (dateOfBirth) {
+            parsedDateOfBirth = new Date(dateOfBirth);
+
+            if (Number.isNaN(parsedDateOfBirth.getTime())) {
+                return res.status(400).json({
+                    message: "Invalid date of birth",
+                });
+            }
+
+            if (parsedDateOfBirth > new Date()) {
+                return res.status(400).json({
+                    message: "Date of birth cannot be in the future",
+                });
+            }
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.userId,
+            {
+                name: name.trim(),
+                email: normalizedEmail,
+                mobile: mobile?.trim() || "",
+                dateOfBirth: parsedDateOfBirth || undefined,
+                gender: gender || undefined,
+                address: {
+                    street: address?.street?.trim() || "",
+                    area: address?.area?.trim() || "",
+                    city: address?.city?.trim() || "",
+                    state: address?.state?.trim() || "",
+                    pincode: address?.pincode?.trim() || "",
+                },
+            },
+            {
+                new: true,
+                runValidators: true,
+            }
+        ).select("-password -resetPasswordToken -resetPasswordExpires");
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+            });
+        }
+
+        return res.json({
+            message: "Profile updated successfully",
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                mobile: user.mobile || "",
+                dateOfBirth: user.dateOfBirth || null,
+                gender: user.gender || "",
+                address: user.address || {
+                    street: "",
+                    area: "",
+                    city: "",
+                    state: "",
+                    pincode: "",
+                },
+            },
+        });
+    } catch (error) {
+        console.error("Profile update error:", error);
+
+        return res.status(500).json({
+            message: "Error updating profile",
+        });
+    }
+});
+
 // Create Order route
 
 app.post("/api/orders", authMiddleware, async (req, res) => {
@@ -428,12 +552,21 @@ app.post("/api/orders", authMiddleware, async (req, res) => {
 
             calculatedSubtotal += itemTotal;
 
+
             validatedItems.push({
                 product: product._id,
                 name: product.name,
+                image:
+                    product.image ||
+                    product.imageUrl ||
+                    (Array.isArray(product.images)
+                        ? product.images[0]
+                        : product.images) ||
+                    "",
                 price: product.price,
                 quantity: item.quantity,
             });
+
         }
 
         if (!Number.isSafeInteger(calculatedSubtotal)) {
@@ -481,12 +614,34 @@ app.post("/api/orders", authMiddleware, async (req, res) => {
 // Get logged-in user's orders
 app.get("/api/orders", authMiddleware, async (req, res) => {
     try {
+
         const orders = await Order.find({
             user: req.user.userId,
-        }).sort({ createdAt: -1 });
+        })
+            .populate("items.product", "image name")
+            .sort({ createdAt: -1 });
+
+        const updatedOrders = orders.map((order) => {
+            const orderObject = order.toObject();
+
+            orderObject.items = orderObject.items.map((item) => ({
+                ...item,
+                image:
+                    item.image ||
+                    item.product?.image ||
+                    "",
+                name:
+                    item.name ||
+                    item.product?.name ||
+                    "",
+            }));
+
+            return orderObject;
+        });
+
 
         res.json({
-            orders,
+            orders: updatedOrders,
         });
     } catch (error) {
         console.error("Get orders error:", error);
