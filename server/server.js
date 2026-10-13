@@ -8,6 +8,7 @@ const Product = require("./models/Product");
 const User = require("./models/User");
 const Order = require("./models/Order");
 const Wishlist = require("./models/Wishlist");
+const Contact = require("./models/Contact");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const authMiddleware = require("./middleware/auth");
@@ -763,6 +764,67 @@ app.delete(
     }
   }
 );
+
+
+/* Contact Form API */
+app.post("/api/contact", async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    // Validate required fields
+    if (
+      !name?.trim() ||
+      !email?.trim() ||
+      !subject?.trim() ||
+      !message?.trim()
+    ) {
+      return res.status(400).json({
+        message: "Please fill in all required fields.",
+      });
+    }
+
+    // Validate field lengths
+    if (
+      name.trim().length > 100 ||
+      email.trim().length > 254 ||
+      subject.trim().length > 150 ||
+      message.trim().length > 5000
+    ) {
+      return res.status(400).json({
+        message: "One or more fields exceed the allowed length.",
+      });
+    }
+
+    // Basic email format validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(email.trim())) {
+      return res.status(400).json({
+        message: "Please enter a valid email address.",
+      });
+    }
+
+    // Save contact message in MongoDB
+    const contact = await Contact.create({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      subject: subject.trim(),
+      message: message.trim(),
+    });
+
+    return res.status(201).json({
+      message: "Your message has been submitted successfully!",
+      contactId: contact._id,
+    });
+  } catch (error) {
+    console.error("Contact form error:", error);
+
+    return res.status(500).json({
+      message: "Unable to submit your message. Please try again later.",
+    });
+  }
+});
+
 
 // Start Server
 app.listen(port, () => {

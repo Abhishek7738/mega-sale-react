@@ -38,7 +38,7 @@ import SignupPage from "./Pages/SignupPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
 import SearchResultsPage from "./Pages/SearchResultsPage";
 import WishlistPage from "./Pages/WishlistPage";
-
+import ContactPage from "./Pages/ContactPage";
 function MainLayout() {
   return (
     <>
@@ -104,6 +104,7 @@ function App() {
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="orders" element={<OrdersPage />} />
               <Route path="wishlist" element={<WishlistPage />} />
+              <Route path="contact" element={<ContactPage />} />
               <Route path="track-order/:orderId" element={<TrackOrderPage />} />
               <Route path="thank-you" element={<ThankYouPage />} />
               <Route path="profile" element={<ProfilePage />} />

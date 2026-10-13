@@ -354,6 +354,7 @@ function Navbar() {
             <div className="hidden lg:flex items-center shrink-0">
               <button
                 aria-label="Phone"
+                onClick={() => navigate("/contact")}
                 className="w-11 xl:w-12 h-10 border-r border-gray-200 text-gray-600 hover:text-blue-600 transition"
               >
                 <i className="fa-solid fa-phone"></i>
@@ -638,7 +639,13 @@ function Navbar() {
               {navLinks.map((link) => (
                 <li key={link}>
                   <Link
-                    to={link === "Home" ? "/" : "#"}
+                    to={
+                      link === "Home"
+                        ? "/"
+                        : link === "Contact"
+                          ? "/contact"
+                          : "#"
+                    }
                     className="
                       group
                       relative
@@ -1166,7 +1173,13 @@ function Navbar() {
               {navLinks.map((link) => (
                 <li key={link}>
                   <Link
-                    to={link === "Home" ? "/" : "#"}
+                    to={
+                      link === "Home"
+                        ? "/"
+                        : link === "Contact"
+                          ? "/contact"
+                          : "#"
+                    }
                     onClick={() => setShowMenu(false)}
                     className="
                       group
@@ -1214,6 +1227,7 @@ function Navbar() {
           <div className="flex items-center justify-around py-4 border-t border-gray-100">
             <button
               aria-label="Phone"
+              onClick={() => navigate("/contact")}
               className="text-gray-600 hover:text-blue-600 transition"
             >
               <i className="fa-solid fa-phone"></i>
