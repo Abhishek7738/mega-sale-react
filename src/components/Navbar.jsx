@@ -3,8 +3,10 @@ import { useCart } from "../context/CartContext";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import productCatalog from "../data/products";
+import { useWishlist } from "../context/WishlistContext";
 
 function Navbar() {
+  const { wishlistCount } = useWishlist();
   const navigate = useNavigate();
   const {
     cartCount,
@@ -359,9 +361,16 @@ function Navbar() {
 
               <button
                 aria-label="Wishlist"
-                className="w-11 xl:w-12 h-10 border-r border-gray-200 text-gray-600 hover:text-blue-600 transition"
+                onClick={() => navigate("/wishlist")}
+                className="relative w-11 xl:w-12 h-10 border-r border-gray-200 text-gray-600 hover:text-blue-600 transition"
               >
                 <i className="fa-regular fa-heart"></i>
+
+                {wishlistCount > 0 && (
+                  <span className="absolute top-0 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                    {wishlistCount}
+                  </span>
+                )}
               </button>
 
               <Link
@@ -1212,9 +1221,16 @@ function Navbar() {
 
             <button
               aria-label="Wishlist"
-              className="text-gray-600 hover:text-blue-600 transition"
+              onClick={() => navigate("/wishlist")}
+              className="relative text-gray-600 hover:text-blue-600 transition"
             >
               <i className="fa-regular fa-heart"></i>
+
+              {wishlistCount > 0 && (
+                <span className="absolute -top-2 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {wishlistCount}
+                </span>
+              )}
             </button>
 
             <Link

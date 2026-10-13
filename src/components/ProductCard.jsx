@@ -1,7 +1,14 @@
+import React from "react";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
+import { useNavigate } from "react-router-dom";
 
-function ProductCard({id, name, weight, price, oldPrice, image, featured }) {
+function ProductCard({ id, name, weight, price, oldPrice, image, featured }) {
   const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isWishlisted } = useWishlist();
+
+  const navigate = useNavigate();
+  const [wishlistLoading, setWishlistLoading] = React.useState(false);
 
   return (
     <div className="group flex h-full w-full flex-col overflow-hidden rounded-xl bg-white shadow-none transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
@@ -41,10 +48,49 @@ function ProductCard({id, name, weight, price, oldPrice, image, featured }) {
 
           <button
             type="button"
-            className="flex h-9 w-11 items-center justify-center text-gray-600 hover:text-red-500"
-            title="Wishlist"
+            className={`flex h-9 w-11 items-center justify-center text-gray-600 transition ${
+              isWishlisted(id) ? "text-red-500" : "hover:text-red-500"
+            }`}
+            title={
+              isWishlisted(id) ? "Remove from Wishlist" : "Add to Wishlist"
+            }
+            aria-label={
+              isWishlisted(id) ? "Remove from Wishlist" : "Add to Wishlist"
+            }
+            disabled={wishlistLoading}
+            onClick={async () => {
+              if (!id) {
+                alert("Product ID missing.");
+                return;
+              }
+
+              setWishlistLoading(true);
+
+              try {
+                if (isWishlisted(id)) {
+                  const result = await removeFromWishlist(id);
+                  if (!result.success) alert(result.message);
+                } else {
+                  const result = await addToWishlist(id);
+
+                  if (!result.success) {
+                    if (result.message === "Wishlist ke liye login karo.") {
+                      navigate("/login");
+                    } else {
+                      alert(result.message);
+                    }
+                  }
+                }
+              } finally {
+                setWishlistLoading(false);
+              }
+            }}
           >
-            <i className="fa-solid fa-heart"></i>
+            <i
+              className={`fa-heart ${
+                isWishlisted(id) ? "fa-solid" : "fa-regular"
+              }`}
+            ></i>
           </button>
         </div>
       </div>

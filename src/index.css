@@ -81,3 +81,153 @@
     transform: none;
   }
 }
+
+
+/* Wishlist animations */
+
+@keyframes wishlistFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wishlistFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes wishlistHeartBeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.22);
+  }
+  65% {
+    transform: scale(0.94);
+  }
+}
+
+@keyframes wishlistShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+/* Wishlist animations */
+
+.wishlist-page {
+  animation: wishlistFadeIn 0.45s ease-out both;
+}
+
+
+.wishlist-header {
+  animation: wishlistFadeUp 0.5s ease-out both;
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.wishlist-header:hover {
+  border-color: rgba(147, 197, 253, 0.65);
+  box-shadow: 0 12px 35px rgba(37, 99, 235, 0.10);
+}
+
+
+.wishlist-toolbar {
+  animation: wishlistFadeUp 0.55s ease-out 0.1s both;
+}
+
+.wishlist-card {
+  animation: wishlistFadeUp 0.5s ease-out both;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.wishlist-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 32px rgba(37, 99, 235, 0.12);
+  border-color: #bfdbfe;
+}
+
+.wishlist-image {
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.wishlist-card:hover .wishlist-image {
+  transform: scale(1.08);
+}
+
+.wishlist-heart {
+  transition:
+    transform 0.25s ease,
+    color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.wishlist-heart:hover {
+  transform: scale(1.12);
+  background-color: #fff1f2;
+  color: #e11d48;
+}
+
+.wishlist-heart:active {
+  animation: wishlistHeartBeat 0.35s ease;
+}
+
+.wishlist-cart-button {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.wishlist-cart-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 15px rgba(37, 99, 235, 0.22);
+}
+
+.wishlist-cart-button:active {
+  transform: scale(0.97);
+}
+
+.wishlist-empty {
+  animation: wishlistFadeUp 0.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wishlist-page,
+  .wishlist-header,
+  .wishlist-toolbar,
+  .wishlist-card,
+  .wishlist-empty {
+    animation: none !important;
+  }
+
+  .wishlist-card,
+  .wishlist-image,
+  .wishlist-heart,
+  .wishlist-cart-button {
+    transition: none !important;
+  }
+
+  .wishlist-card:hover,
+  .wishlist-cart-button:hover {
+    transform: none;
+  }
+}
+

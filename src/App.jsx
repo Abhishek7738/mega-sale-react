@@ -25,6 +25,7 @@ import CategoryPage from "./Pages/CategoryPage";
 import CartPage from "./Pages/CartPage";
 import CheckoutPage from "./Pages/CheckoutPage";
 import OrdersPage from "./Pages/OrdersPage";
+import { WishlistProvider } from "./context/WishlistContext";
 import TrackOrderPage from "./Pages/TrackOrderPage";
 import ThankYouPage from "./Pages/ThankYouPage";
 import ProfilePage from "./Pages/ProfilePage";
@@ -36,6 +37,7 @@ import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import SignupPage from "./Pages/SignupPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
 import SearchResultsPage from "./Pages/SearchResultsPage";
+import WishlistPage from "./Pages/WishlistPage";
 
 function MainLayout() {
   return (
@@ -91,6 +93,7 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
+        <WishlistProvider>
         <BrowserRouter>
           <Routes>
             <Route element={<MainLayout />}>
@@ -100,6 +103,7 @@ function App() {
               <Route path="cart" element={<CartPage />} />
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="orders" element={<OrdersPage />} />
+              <Route path="wishlist" element={<WishlistPage />} />
               <Route path="track-order/:orderId" element={<TrackOrderPage />} />
               <Route path="thank-you" element={<ThankYouPage />} />
               <Route path="profile" element={<ProfilePage />} />
@@ -113,6 +117,7 @@ function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        </WishlistProvider>
       </CartProvider>
     </AuthProvider>
   );
