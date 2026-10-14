@@ -12,6 +12,7 @@ const Contact = require("./models/Contact");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const authMiddleware = require("./middleware/auth");
+const adminMiddleware = require("./middleware/adminMiddleware");
 const sendEmail = require("./utils/sendEmail");
 const crypto = require("crypto");
 
@@ -67,7 +68,7 @@ app.get("/api/products", (req, res) => {
 });
 
 // Create Product
-app.post("/api/products", (req, res) => {
+app.post("/api/products", authMiddleware, adminMiddleware, (req, res) => {
     Product.create(req.body)
         .then((product) => {
             res.status(201).json(product);
@@ -80,7 +81,7 @@ app.post("/api/products", (req, res) => {
         });
 });
 // Update Product
-app.put("/api/products/:id", async (req, res) => {
+app.put("/api/products/:id", authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const product = await Product.findByIdAndUpdate(
             req.params.id,
@@ -327,42 +328,45 @@ app.post("/api/reset-password/:token", async (req, res) => {
 });
 
 // Protected Profile Route
-app.get("/api/profile", authMiddleware, (req, res) => {
-    User.findById(req.user.userId)
-        .select("-password")
-        .then((user) => {
-            if (!user) {
-                return res.status(404).json({
-                    message: "User not found"
-                });
-            }
 
-            res.json({
-                message: "Profile accessed successfully",
-                user: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    mobile: user.mobile || "",
-                    dateOfBirth: user.dateOfBirth || null,
-                    gender: user.gender || "",
-                    address: user.address || {
-                        street: "",
-                        area: "",
-                        city: "",
-                        state: "",
-                        pincode: "",
-                    },
-                }
+app.get("/api/profile", authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId).select("-password");
+        console.log("PROFILE ROLE CHECK:", user?.role);
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
             });
-        })
-        .catch((error) => {
-            res.status(500).json({
-                message: "Error fetching profile",
-                error: error.message
-            });
+        }
+
+        return res.json({
+            message: "Profile accessed successfully",
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role || "customer",
+                mobile: user.mobile || "",
+                dateOfBirth: user.dateOfBirth || null,
+                gender: user.gender || "",
+                address: user.address || {
+                    street: "",
+                    area: "",
+                    city: "",
+                    state: "",
+                    pincode: "",
+                },
+            },
         });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error fetching profile",
+            error: error.message,
+        });
+    }
 });
+
 
 app.put("/api/profile", authMiddleware, async (req, res) => {
     try {
@@ -658,172 +662,304 @@ app.get("/api/orders", authMiddleware, async (req, res) => {
 
 // Get logged-in user's wishlist
 app.get("/api/wishlist", authMiddleware, async (req, res) => {
-  try {
-    const wishlist = await Wishlist.findOne({
-      user: req.user.userId,
-    }).populate(
-      "products",
-      "name weight price oldPrice image featured rating categories"
-    );
+    try {
+        const wishlist = await Wishlist.findOne({
+            user: req.user.userId,
+        }).populate(
+            "products",
+            "name weight price oldPrice image featured rating categories"
+        );
 
-    return res.json({
-      wishlist: wishlist
-        ? wishlist.products.map((product) => ({ product }))
-        : [],
-    });
-  } catch (error) {
-    console.error("Get wishlist error:", error);
-    return res.status(500).json({
-      message: "Error fetching wishlist",
-    });
-  }
+        return res.json({
+            wishlist: wishlist
+                ? wishlist.products.map((product) => ({ product }))
+                : [],
+        });
+    } catch (error) {
+        console.error("Get wishlist error:", error);
+        return res.status(500).json({
+            message: "Error fetching wishlist",
+        });
+    }
 });
 
 // Add product to wishlist
 app.post("/api/wishlist", authMiddleware, async (req, res) => {
-  try {
-    const { productId } = req.body;
+    try {
+        const { productId } = req.body;
 
-    if (!mongoose.isValidObjectId(productId)) {
-      return res.status(400).json({ message: "Invalid product ID" });
+        if (!mongoose.isValidObjectId(productId)) {
+            return res.status(400).json({ message: "Invalid product ID" });
+        }
+
+        const productExists = await Product.exists({ _id: productId });
+
+        if (!productExists) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        let wishlist = await Wishlist.findOne({
+            user: req.user.userId,
+        });
+
+        if (!wishlist) {
+            wishlist = new Wishlist({
+                user: req.user.userId,
+                products: [],
+            });
+        }
+
+        const alreadyExists = wishlist.products.some(
+            (id) => id.toString() === productId
+        );
+
+        if (alreadyExists) {
+            return res.json({ message: "Product already in wishlist" });
+        }
+
+        wishlist.products.push(productId);
+        await wishlist.save();
+
+        return res.status(201).json({
+            message: "Product added to wishlist",
+        });
+    } catch (error) {
+        console.error("Add wishlist error:", error);
+        return res.status(500).json({
+            message: "Error adding product to wishlist",
+        });
     }
-
-    const productExists = await Product.exists({ _id: productId });
-
-    if (!productExists) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    let wishlist = await Wishlist.findOne({
-      user: req.user.userId,
-    });
-
-    if (!wishlist) {
-      wishlist = new Wishlist({
-        user: req.user.userId,
-        products: [],
-      });
-    }
-
-    const alreadyExists = wishlist.products.some(
-      (id) => id.toString() === productId
-    );
-
-    if (alreadyExists) {
-      return res.json({ message: "Product already in wishlist" });
-    }
-
-    wishlist.products.push(productId);
-    await wishlist.save();
-
-    return res.status(201).json({
-      message: "Product added to wishlist",
-    });
-  } catch (error) {
-    console.error("Add wishlist error:", error);
-    return res.status(500).json({
-      message: "Error adding product to wishlist",
-    });
-  }
 });
 
 // Remove product from wishlist
 app.delete(
-  "/api/wishlist/:productId",
-  authMiddleware,
-  async (req, res) => {
-    try {
-      const { productId } = req.params;
+    "/api/wishlist/:productId",
+    authMiddleware,
+    async (req, res) => {
+        try {
+            const { productId } = req.params;
 
-      if (!mongoose.isValidObjectId(productId)) {
-        return res.status(400).json({ message: "Invalid product ID" });
-      }
+            if (!mongoose.isValidObjectId(productId)) {
+                return res.status(400).json({ message: "Invalid product ID" });
+            }
 
-      const wishlist = await Wishlist.findOne({
-        user: req.user.userId,
-      });
+            const wishlist = await Wishlist.findOne({
+                user: req.user.userId,
+            });
 
-      if (!wishlist) {
-        return res.status(404).json({ message: "Wishlist not found" });
-      }
+            if (!wishlist) {
+                return res.status(404).json({ message: "Wishlist not found" });
+            }
 
-      wishlist.products = wishlist.products.filter(
-        (id) => id.toString() !== productId
-      );
+            wishlist.products = wishlist.products.filter(
+                (id) => id.toString() !== productId
+            );
 
-      await wishlist.save();
+            await wishlist.save();
 
-      return res.json({
-        message: "Product removed from wishlist",
-      });
-    } catch (error) {
-      console.error("Remove wishlist error:", error);
-      return res.status(500).json({
-        message: "Error removing product from wishlist",
-      });
+            return res.json({
+                message: "Product removed from wishlist",
+            });
+        } catch (error) {
+            console.error("Remove wishlist error:", error);
+            return res.status(500).json({
+                message: "Error removing product from wishlist",
+            });
+        }
     }
-  }
 );
 
 
 /* Contact Form API */
 app.post("/api/contact", async (req, res) => {
-  try {
-    const { name, email, subject, message } = req.body;
+    try {
+        const { name, email, subject, message } = req.body;
 
-    // Validate required fields
-    if (
-      !name?.trim() ||
-      !email?.trim() ||
-      !subject?.trim() ||
-      !message?.trim()
-    ) {
-      return res.status(400).json({
-        message: "Please fill in all required fields.",
-      });
+        // Validate required fields
+        if (
+            !name?.trim() ||
+            !email?.trim() ||
+            !subject?.trim() ||
+            !message?.trim()
+        ) {
+            return res.status(400).json({
+                message: "Please fill in all required fields.",
+            });
+        }
+
+        // Validate field lengths
+        if (
+            name.trim().length > 100 ||
+            email.trim().length > 254 ||
+            subject.trim().length > 150 ||
+            message.trim().length > 5000
+        ) {
+            return res.status(400).json({
+                message: "One or more fields exceed the allowed length.",
+            });
+        }
+
+        // Basic email format validation
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailPattern.test(email.trim())) {
+            return res.status(400).json({
+                message: "Please enter a valid email address.",
+            });
+        }
+
+        // Save contact message in MongoDB
+        const contact = await Contact.create({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            subject: subject.trim(),
+            message: message.trim(),
+        });
+
+        return res.status(201).json({
+            message: "Your message has been submitted successfully!",
+            contactId: contact._id,
+        });
+    } catch (error) {
+        console.error("Contact form error:", error);
+
+        return res.status(500).json({
+            message: "Unable to submit your message. Please try again later.",
+        });
     }
-
-    // Validate field lengths
-    if (
-      name.trim().length > 100 ||
-      email.trim().length > 254 ||
-      subject.trim().length > 150 ||
-      message.trim().length > 5000
-    ) {
-      return res.status(400).json({
-        message: "One or more fields exceed the allowed length.",
-      });
-    }
-
-    // Basic email format validation
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailPattern.test(email.trim())) {
-      return res.status(400).json({
-        message: "Please enter a valid email address.",
-      });
-    }
-
-    // Save contact message in MongoDB
-    const contact = await Contact.create({
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      subject: subject.trim(),
-      message: message.trim(),
-    });
-
-    return res.status(201).json({
-      message: "Your message has been submitted successfully!",
-      contactId: contact._id,
-    });
-  } catch (error) {
-    console.error("Contact form error:", error);
-
-    return res.status(500).json({
-      message: "Unable to submit your message. Please try again later.",
-    });
-  }
 });
+
+
+app.get(
+    "/api/admin/dashboard-stats",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const [
+                totalProducts,
+                totalOrders,
+                totalCustomers,
+                totalContacts,
+            ] = await Promise.all([
+                Product.countDocuments(),
+                Order.countDocuments(),
+                User.countDocuments({ role: { $ne: "admin" } }),
+                Contact.countDocuments(),
+            ]);
+
+            return res.json({
+                totalProducts,
+                totalOrders,
+                totalCustomers,
+                totalContacts,
+            });
+        } catch (error) {
+            console.error("Dashboard stats error:", error);
+
+            return res.status(500).json({
+                message: "Error fetching dashboard statistics",
+            });
+        }
+    }
+);
+
+app.get(
+    "/api/admin/recent-orders",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const orders = await Order.find()
+                .sort({ createdAt: -1 })
+                .limit(5)
+                .select(
+                    "customer total paymentMethod paymentStatus orderStatus createdAt"
+                )
+                .lean();
+
+            return res.json({ orders });
+        } catch (error) {
+            console.error("Recent orders error:", error);
+
+            return res.status(500).json({
+                message: "Error fetching recent orders",
+            });
+        }
+    }
+);
+
+
+app.get(
+    "/api/admin/sales-overview",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const now = new Date();
+            const startDate = new Date(now);
+            startDate.setHours(0, 0, 0, 0);
+            startDate.setDate(startDate.getDate() - 6);
+
+            const dailyData = await Order.aggregate([
+                {
+                    $match: {
+                        createdAt: { $gte: startDate, $lte: now },
+                        orderStatus: { $ne: "Cancelled" },
+                    },
+                },
+                {
+                    $group: {
+                        _id: {
+                            year: { $year: "$createdAt" },
+                            month: { $month: "$createdAt" },
+                            day: { $dayOfMonth: "$createdAt" },
+                        },
+                        orders: { $sum: 1 },
+                        orderValue: { $sum: "$total" },
+                    },
+                },
+                { $sort: { _id: 1 } },
+            ]);
+
+            const days = [];
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+
+                const match = dailyData.find(
+                    (item) =>
+                        item._id.year === date.getFullYear() &&
+                        item._id.month === date.getMonth() + 1 &&
+                        item._id.day === date.getDate()
+                );
+
+                days.push({
+                    date: date.toISOString().slice(0, 10),
+                    orders: match?.orders || 0,
+                    orderValue: match?.orderValue || 0,
+                });
+            }
+
+            return res.json({
+                period: "Last 7 days",
+                days,
+                totalOrders: days.reduce((sum, day) => sum + day.orders, 0),
+                totalOrderValue: days.reduce(
+                    (sum, day) => sum + day.orderValue,
+                    0
+                ),
+            });
+        } catch (error) {
+            console.error("Sales overview error:", error);
+
+            return res.status(500).json({
+                message: "Error fetching sales overview",
+            });
+        }
+    }
+);
 
 
 // Start Server
