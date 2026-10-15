@@ -15,9 +15,44 @@ const authMiddleware = require("./middleware/auth");
 const adminMiddleware = require("./middleware/adminMiddleware");
 const sendEmail = require("./utils/sendEmail");
 const crypto = require("crypto");
-
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 app.use(cors());
 app.use(express.json());
+
+const uploadDir = path.join(__dirname, "uploads");
+
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const extension = path.extname(file.originalname).toLowerCase();
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`;
+        cb(null, uniqueName);
+    },
+});
+
+const upload = multer({
+    storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024,
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith("image/")) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only image files are allowed."));
+        }
+    },
+});
+app.use("/uploads", express.static(uploadDir));
+
 
 mongoose
     .connect("mongodb://localhost:27017/megaSale")
@@ -67,42 +102,232 @@ app.get("/api/products", (req, res) => {
         });
 });
 
-// Create Product
-app.post("/api/products", authMiddleware, adminMiddleware, (req, res) => {
-    Product.create(req.body)
-        .then((product) => {
+
+// Create Product with Image Upload
+app.post(
+    "/api/products",
+    authMiddleware,
+    adminMiddleware,
+    upload.single("image"),
+    async (req, res) => {
+        try {
+            const {
+                name,
+                weight,
+                price,
+                oldPrice,
+                categories,
+                featured,
+                isPremium,
+                isNewLaunch,
+            } = req.body;
+            console.log("PRODUCT FORM DATA:", req.body);
+            console.log("UPLOADED IMAGE:", req.file?.filename);
+
+            if (!name?.trim() || price === undefined || price === "") {
+                return res.status(400).json({
+                    message: "Product name and price are required.",
+                });
+            }
+
+            const parsedPrice = Number(price);
+            const parsedOldPrice =
+                oldPrice !== undefined && oldPrice !== ""
+                    ? Number(oldPrice)
+                    : undefined;
+
+            if (
+                !Number.isFinite(parsedPrice) ||
+                parsedPrice < 0 ||
+                (parsedOldPrice !== undefined &&
+                    (!Number.isFinite(parsedOldPrice) || parsedOldPrice < 0))
+            ) {
+                return res.status(400).json({
+                    message: "Please enter valid prices.",
+                });
+            }
+
+            const parsedCategories = (categories || "")
+                .split(",")
+                .map((category) => category.trim())
+                .filter(Boolean);
+
+            const productData = {
+                name: name.trim(),
+                weight: weight || "",
+                price: parsedPrice,
+                image: req.file ? `/uploads/${req.file.filename}` : "",
+                categories: parsedCategories,
+                featured: featured === "true",
+                isPremium: isPremium === "true",
+                isNewLaunch: isNewLaunch === "true",
+            };
+
+            if (parsedOldPrice !== undefined) {
+                productData.oldPrice = parsedOldPrice;
+            }
+
+            const product = await Product.create(productData);
+
             res.status(201).json(product);
-        })
-        .catch((error) => {
+        } catch (error) {
             res.status(500).json({
                 message: "Error creating product",
-                error: error.message
-            });
-        });
-});
-// Update Product
-app.put("/api/products/:id", authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-        const product = await Product.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true, runValidators: true }
-        );
-
-        if (!product) {
-            return res.status(404).json({
-                message: "Product not found"
+                error: error.message,
             });
         }
-
-        res.json(product);
-    } catch (error) {
-        res.status(500).json({
-            message: "Error updating product",
-            error: error.message
-        });
     }
-});
+);
+
+
+
+// Update Product
+app.put(
+    "/api/products/:id",
+    authMiddleware,
+    adminMiddleware,
+    upload.single("image"),
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            // Validate product ID
+            if (!mongoose.isValidObjectId(id)) {
+                return res.status(400).json({
+                    message: "Invalid product ID"
+                });
+            }
+
+            const existingProduct = await Product.findById(id);
+
+            if (!existingProduct) {
+                return res.status(404).json({
+                    message: "Product not found"
+                });
+            }
+
+            const {
+                name,
+                weight,
+                price,
+                oldPrice,
+                categories,
+                featured,
+                isPremium,
+                isNewLaunch,
+            } = req.body;
+
+            // Validate required fields
+            if (!name?.trim() || price === undefined || price === "") {
+                return res.status(400).json({
+                    message: "Product name and price are required"
+                });
+            }
+
+            const parsedPrice = Number(price);
+
+            if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+                return res.status(400).json({
+                    message: "Please enter a valid price"
+                });
+            }
+
+            const updates = {
+                name: name.trim(),
+                weight: weight || "",
+                price: parsedPrice,
+                categories: (categories || "")
+                    .split(",")
+                    .map(category => category.trim())
+                    .filter(Boolean),
+
+                featured: featured === "true",
+                isPremium: isPremium === "true",
+                isNewLaunch: isNewLaunch === "true"
+
+            };
+
+            // Update or clear old price
+            if (oldPrice !== undefined && oldPrice !== "") {
+                const parsedOldPrice = Number(oldPrice);
+
+                if (
+                    !Number.isFinite(parsedOldPrice) ||
+                    parsedOldPrice < 0
+                ) {
+                    return res.status(400).json({
+                        message: "Please enter a valid old price"
+                    });
+                }
+
+                updates.oldPrice = parsedOldPrice;
+            } else {
+                updates.$unset = { oldPrice: 1 };
+            }
+
+            // Change image only when a new image is uploaded
+            if (req.file) {
+                updates.image = `/uploads/${req.file.filename}`;
+            }
+
+            const product = await Product.findByIdAndUpdate(
+                id,
+                updates,
+                {
+                    new: true,
+                    runValidators: true
+                }
+            );
+
+            res.json(product);
+        } catch (error) {
+            res.status(500).json({
+                message: "Error updating product",
+                error: error.message
+            });
+        }
+    }
+);
+
+
+
+/* Delete Product — Admin Only */
+app.delete(
+    "/api/products/:id",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!mongoose.isValidObjectId(id)) {
+                return res.status(400).json({
+                    message: "Invalid product ID",
+                });
+            }
+
+            const product = await Product.findByIdAndDelete(id);
+
+            if (!product) {
+                return res.status(404).json({
+                    message: "Product not found",
+                });
+            }
+
+            return res.json({
+                message: "Product deleted successfully",
+                productId: product._id,
+            });
+        } catch (error) {
+            console.error("Delete product error:", error);
+
+            return res.status(500).json({
+                message: "Error deleting product",
+            });
+        }
+    }
+);
+
 
 // Register User
 app.post("/api/register", async (req, res) => {

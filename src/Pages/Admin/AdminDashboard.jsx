@@ -10,58 +10,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const adminSections = [
-  {
-    title: "Products",
-    description: "Add, edit and manage products",
-    path: "/admin/products",
-  },
-  {
-    title: "Categories",
-    description: "Manage product categories",
-    path: "/admin/categories",
-  },
-  {
-    title: "Premium",
-    description: "Manage premium products",
-    path: "/admin/premium",
-  },
-  {
-    title: "New Launch",
-    description: "Manage new launch products",
-    path: "/admin/new-launch",
-  },
-  {
-    title: "Orders",
-    description: "View and manage customer orders",
-    path: "/admin/orders",
-  },
-  {
-    title: "Customers",
-    description: "View registered customers",
-    path: "/admin/customers",
-  },
-  {
-    title: "Inventory",
-    description: "Review product stock",
-    path: "/admin/inventory",
-  },
-  {
-    title: "Contact Messages",
-    description: "Review customer enquiries",
-    path: "/admin/contacts",
-  },
-  {
-    title: "Reports & Analytics",
-    description: "Review store performance",
-    path: "/admin/reports",
-  },
-  {
-    title: "Settings",
-    description: "Manage store settings",
-    path: "/admin/settings",
-  },
-];
+const adminSections = [];
 
 const API_BASE = "http://localhost:5000";
 
@@ -426,41 +375,6 @@ export default function AdminDashboard() {
             </table>
           </div>
         )}
-      </section>
-
-      {/* Store management */}
-      <section>
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-slate-900">Store Management</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Quick access to your store tools
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {adminSections.map((section) => (
-            <Link
-              key={section.title}
-              to={section.path}
-              className="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="font-semibold text-slate-900">
-                  {section.title}
-                </h3>
-                <span className="text-orange-600 transition-transform group-hover:translate-x-1">
-                  →
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-slate-500">
-                {section.description}
-              </p>
-              <p className="mt-4 text-sm font-semibold text-orange-600">
-                Open section
-              </p>
-            </Link>
-          ))}
-        </div>
       </section>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const API_BASE = "http://localhost:5000";
 
@@ -10,6 +10,8 @@ const INITIAL_FORM = {
   image: "",
   categories: "",
   featured: false,
+  isPremium: false,
+  isNewLaunch: false,
 };
 
 function AdminProducts() {
@@ -18,8 +20,12 @@ function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({ ...INITIAL_FORM });
   const [saving, setSaving] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const fileInputRef = useRef(null);
 
   // Load products and update results when search changes.
   useEffect(() => {
@@ -67,7 +73,7 @@ function AdminProducts() {
     }));
   }
 
-  // Create a product in MongoDB through the protected API.
+  // Create a product with image upload through the protected API.
   async function handleAddProduct(event) {
     event.preventDefault();
 
@@ -103,20 +109,27 @@ function AdminProducts() {
       }
     }
 
-    const payload = {
-      name,
-      weight: formData.weight.trim(),
-      price,
-      image: formData.image.trim(),
-      categories: formData.categories
-        .split(",")
-        .map((category) => category.trim())
-        .filter(Boolean),
-      featured: formData.featured,
-    };
+    if (selectedImage && !selectedImage.type.startsWith("image/")) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
+    const payload = new FormData();
+
+    payload.append("name", name);
+    payload.append("weight", formData.weight.trim());
+    payload.append("price", String(price));
+    payload.append("categories", formData.categories);
+    payload.append("featured", String(formData.featured));
+    payload.append("isPremium", String(formData.isPremium));
+    payload.append("isNewLaunch", String(formData.isNewLaunch));
 
     if (oldPrice !== undefined) {
-      payload.oldPrice = oldPrice;
+      payload.append("oldPrice", String(oldPrice));
+    }
+
+    if (selectedImage) {
+      payload.append("image", selectedImage);
     }
 
     try {
@@ -125,10 +138,9 @@ function AdminProducts() {
       const response = await fetch(`${API_BASE}/api/products`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: payload,
       });
 
       const result = await response.json();
@@ -137,7 +149,6 @@ function AdminProducts() {
         throw new Error(result.message || "Product save nahi hua.");
       }
 
-      // Add the saved product to the table.
       setProducts((previous) => {
         const updated = [result, ...previous];
 
@@ -151,10 +162,166 @@ function AdminProducts() {
       });
 
       setFormData({ ...INITIAL_FORM });
+      setSelectedImage(null);
+      setImagePreview("");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
       setShowAddForm(false);
       alert("Product successfully added!");
     } catch (err) {
       alert(err.message || "Product save karte waqt error aaya.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Delete product from MongoDB through the protected API.
+  async function handleDeleteProduct(productId, productName) {
+    const confirmed = window.confirm(
+      `Kya tum "${productName}" ko delete karna chahte ho?`,
+    );
+
+    if (!confirmed) return;
+
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+
+    if (!token) {
+      alert("Login token nahi mila. Please login again.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const response = await fetch(`${API_BASE}/api/products/${productId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Product delete nahi hua.");
+      }
+
+      setProducts((previous) =>
+        previous.filter((product) => product._id !== productId),
+      );
+
+      alert("Product successfully deleted!");
+    } catch (error) {
+      alert(error.message || "Product delete karte waqt error aaya.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // Update an existing product.
+  async function handleEditProduct(event) {
+    event.preventDefault();
+
+    if (!editingProduct) return;
+
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+
+    if (!token) {
+      alert("Login token nahi mila. Please login again.");
+      return;
+    }
+
+    const name = formData.name.trim();
+    const price = Number(formData.price);
+
+    if (!name || formData.price.trim() === "") {
+      alert("Product name aur price required hain.");
+      return;
+    }
+
+    if (!Number.isFinite(price) || price < 0) {
+      alert("Valid product price enter karo.");
+      return;
+    }
+
+    let oldPrice;
+
+    if (formData.oldPrice.trim() !== "") {
+      oldPrice = Number(formData.oldPrice);
+
+      if (!Number.isFinite(oldPrice) || oldPrice < 0) {
+        alert("Valid old price enter karo.");
+        return;
+      }
+    }
+
+    const payload = new FormData();
+
+    payload.append("name", name);
+    payload.append("weight", formData.weight.trim());
+    payload.append("price", String(price));
+    payload.append("categories", formData.categories);
+    payload.append("featured", String(formData.featured));
+    payload.append("isPremium", String(formData.isPremium));
+    payload.append("isNewLaunch", String(formData.isNewLaunch));
+
+    if (oldPrice !== undefined) {
+      payload.append("oldPrice", String(oldPrice));
+    }
+
+    if (selectedImage) {
+      if (!selectedImage.type.startsWith("image/")) {
+        alert("Please select a valid image file.");
+        return;
+      }
+
+      payload.append("image", selectedImage);
+    }
+
+    try {
+      setSaving(true);
+
+      const response = await fetch(
+        `${API_BASE}/api/products/${editingProduct._id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: payload,
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Product update nahi hua.");
+      }
+
+      setProducts((previous) =>
+        previous.map((product) =>
+          product._id === editingProduct._id ? result : product,
+        ),
+      );
+
+      setFormData({ ...INITIAL_FORM });
+      setSelectedImage(null);
+      setImagePreview("");
+      setEditingProduct(null);
+      setShowAddForm(false);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      alert("Product successfully updated!");
+    } catch (error) {
+      alert(error.message || "Product update karte waqt error aaya.");
     } finally {
       setSaving(false);
     }
@@ -189,10 +356,12 @@ function AdminProducts() {
       {/* Add Product form */}
       {showAddForm && (
         <form
-          onSubmit={handleAddProduct}
+          onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
           className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
         >
-          <h2 className="text-lg font-bold text-slate-900">Add New Product</h2>
+          <h2 className="text-lg font-bold text-slate-900">
+            {editingProduct ? "Edit Product" : "Add New Product"}
+          </h2>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <input
@@ -235,14 +404,56 @@ function AdminProducts() {
               className="rounded-lg border border-slate-300 px-4 py-3 text-sm"
             />
 
-            <input
-              name="image"
-              type="url"
-              value={formData.image}
-              onChange={handleFormChange}
-              placeholder="Product image URL (https://...)"
-              className="rounded-lg border border-slate-300 px-4 py-3 text-sm sm:col-span-2"
-            />
+            <div className="sm:col-span-2 space-y-3">
+              <label className="block text-sm font-medium text-slate-700">
+                Upload Product Image
+              </label>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+
+                  if (!file) return;
+
+                  if (!file.type.startsWith("image/")) {
+                    alert("Please select a valid image file.");
+                    event.target.value = "";
+                    return;
+                  }
+
+                  setSelectedImage(file);
+                  setImagePreview(URL.createObjectURL(file));
+                }}
+                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm"
+              />
+
+              {imagePreview && (
+                <div className="flex items-center gap-4">
+                  <img
+                    src={imagePreview}
+                    alt="Product preview"
+                    className="h-24 w-24 rounded-lg border border-slate-200 object-contain"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedImage(null);
+                      setImagePreview("");
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
+                    }}
+                    className="text-sm font-medium text-red-600 hover:text-red-700"
+                  >
+                    Remove image
+                  </button>
+                </div>
+              )}
+            </div>
 
             <input
               name="categories"
@@ -263,12 +474,36 @@ function AdminProducts() {
             Featured product
           </label>
 
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              name="isPremium"
+              type="checkbox"
+              checked={formData.isPremium}
+              onChange={handleFormChange}
+            />
+            Premium Product
+          </label>
+
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              name="isNewLaunch"
+              type="checkbox"
+              checked={formData.isNewLaunch}
+              onChange={handleFormChange}
+            />
+            New Launch
+          </label>
+
           <button
             type="submit"
             disabled={saving}
             className="rounded-lg bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {saving ? "Saving..." : "Save Product"}
+            {saving
+              ? "Saving..."
+              : editingProduct
+                ? "Save Changes"
+                : "Save Product"}
           </button>
         </form>
       )}
@@ -311,6 +546,7 @@ function AdminProducts() {
                   <th className="px-5 py-4">Price</th>
                   <th className="px-5 py-4">Old Price</th>
                   <th className="px-5 py-4">Category</th>
+                  <th className="px-5 py-4">Actions</th>
                 </tr>
               </thead>
 
@@ -321,7 +557,11 @@ function AdminProducts() {
                       <div className="flex items-center gap-3">
                         {product.image ? (
                           <img
-                            src={product.image}
+                            src={
+                              product.image?.startsWith("/uploads/")
+                                ? `http://localhost:5000${product.image}`
+                                : product.image
+                            }
                             alt={product.name}
                             className="h-12 w-12 rounded-lg border border-slate-100 object-contain"
                           />
@@ -355,6 +595,62 @@ function AdminProducts() {
                       {Array.isArray(product.categories)
                         ? product.categories.join(", ")
                         : "—"}
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingProduct(product);
+                            setFormData({
+                              name: product.name || "",
+                              weight: product.weight || "",
+                              price: String(product.price ?? ""),
+                              oldPrice:
+                                product.oldPrice != null
+                                  ? String(product.oldPrice)
+                                  : "",
+                              image: product.image || "",
+                              categories: Array.isArray(product.categories)
+                                ? product.categories.join(", ")
+                                : "",
+                              featured: Boolean(product.featured),
+                              isPremium: Boolean(product.isPremium),
+                              isNewLaunch: Boolean(product.isNewLaunch),
+                            });
+
+                            setSelectedImage(null);
+                            setImagePreview(
+                              product.image?.startsWith("/uploads/")
+                                ? `${API_BASE}${product.image}`
+                                : product.image || "",
+                            );
+
+                            if (fileInputRef.current) {
+                              fileInputRef.current.value = "";
+                            }
+
+                            setShowAddForm(true);
+                          }}
+                          className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-100"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleDeleteProduct(
+                              product._id,
+                              product.name || "this product",
+                            )
+                          }
+                          className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
