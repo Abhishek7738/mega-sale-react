@@ -12,6 +12,8 @@ const INITIAL_FORM = {
   featured: false,
   isPremium: false,
   isNewLaunch: false,
+  description: "",
+  stock: "0",
 };
 
 function AdminProducts() {
@@ -87,6 +89,7 @@ function AdminProducts() {
 
     const name = formData.name.trim();
     const price = Number(formData.price);
+    const stock = Number(formData.stock);
 
     if (!name || formData.price.trim() === "") {
       alert("Product name aur price required hain.");
@@ -95,6 +98,11 @@ function AdminProducts() {
 
     if (!Number.isFinite(price) || price < 0) {
       alert("Valid product price enter karo.");
+      return;
+    }
+
+    if (!Number.isInteger(stock) || stock < 0) {
+      alert("Stock non-negative whole number hona chahiye.");
       return;
     }
 
@@ -123,6 +131,8 @@ function AdminProducts() {
     payload.append("featured", String(formData.featured));
     payload.append("isPremium", String(formData.isPremium));
     payload.append("isNewLaunch", String(formData.isNewLaunch));
+    payload.append("description", formData.description);
+    payload.append("stock", String(stock));
 
     if (oldPrice !== undefined) {
       payload.append("oldPrice", String(oldPrice));
@@ -238,6 +248,7 @@ function AdminProducts() {
 
     const name = formData.name.trim();
     const price = Number(formData.price);
+    const stock = Number(formData.stock);
 
     if (!name || formData.price.trim() === "") {
       alert("Product name aur price required hain.");
@@ -246,6 +257,11 @@ function AdminProducts() {
 
     if (!Number.isFinite(price) || price < 0) {
       alert("Valid product price enter karo.");
+      return;
+    }
+
+    if (!Number.isInteger(stock) || stock < 0) {
+      alert("Stock non-negative whole number hona chahiye.");
       return;
     }
 
@@ -260,6 +276,11 @@ function AdminProducts() {
       }
     }
 
+    if (selectedImage && !selectedImage.type.startsWith("image/")) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
     const payload = new FormData();
 
     payload.append("name", name);
@@ -269,17 +290,14 @@ function AdminProducts() {
     payload.append("featured", String(formData.featured));
     payload.append("isPremium", String(formData.isPremium));
     payload.append("isNewLaunch", String(formData.isNewLaunch));
+    payload.append("description", formData.description);
+    payload.append("stock", String(stock));
 
     if (oldPrice !== undefined) {
       payload.append("oldPrice", String(oldPrice));
     }
 
     if (selectedImage) {
-      if (!selectedImage.type.startsWith("image/")) {
-        alert("Please select a valid image file.");
-        return;
-      }
-
       payload.append("image", selectedImage);
     }
 
@@ -353,159 +371,214 @@ function AdminProducts() {
         </div>
       </div>
 
-      {/* Add Product form */}
+      {/* Add / Edit Product Modal */}
       {showAddForm && (
-        <form
-          onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
-          className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !saving) {
+              setShowAddForm(false);
+              setEditingProduct(null);
+            }
+          }}
         >
-          <h2 className="text-lg font-bold text-slate-900">
-            {editingProduct ? "Edit Product" : "Add New Product"}
-          </h2>
+          <div className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7">
+            <button
+              type="button"
+              aria-label="Close product form"
+              disabled={saving}
+              onClick={() => {
+                setShowAddForm(false);
+                setEditingProduct(null);
+              }}
+              className="absolute right-5 top-5 rounded-lg px-3 py-1 text-2xl text-slate-500 hover:bg-slate-100"
+            >
+              ×
+            </button>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <input
-              required
-              name="name"
-              value={formData.name}
-              onChange={handleFormChange}
-              placeholder="Product name *"
-              className="rounded-lg border border-slate-300 px-4 py-3 text-sm"
-            />
+            <h2 className="mb-6 pr-10 text-xl font-bold text-slate-900">
+              {editingProduct ? "Edit Product" : "Add New Product"}
+            </h2>
 
-            <input
-              name="weight"
-              value={formData.weight}
-              onChange={handleFormChange}
-              placeholder="Weight (e.g. 500g)"
-              className="rounded-lg border border-slate-300 px-4 py-3 text-sm"
-            />
+            <form
+              onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
+              className="space-y-5"
+            >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <input
+                  required
+                  name="name"
+                  value={formData.name}
+                  onChange={handleFormChange}
+                  placeholder="Product name *"
+                  className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm"
+                />
 
-            <input
-              required
-              name="price"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.price}
-              onChange={handleFormChange}
-              placeholder="Price (₹) *"
-              className="rounded-lg border border-slate-300 px-4 py-3 text-sm"
-            />
+                <input
+                  name="weight"
+                  value={formData.weight}
+                  onChange={handleFormChange}
+                  placeholder="Weight (e.g. 500g)"
+                  className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm"
+                />
 
-            <input
-              name="oldPrice"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.oldPrice}
-              onChange={handleFormChange}
-              placeholder="Old price (₹)"
-              className="rounded-lg border border-slate-300 px-4 py-3 text-sm"
-            />
+                <input
+                  required
+                  name="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={handleFormChange}
+                  placeholder="Price (₹) *"
+                  className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm"
+                />
 
-            <div className="sm:col-span-2 space-y-3">
-              <label className="block text-sm font-medium text-slate-700">
-                Upload Product Image
-              </label>
+                <input
+                  name="oldPrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.oldPrice}
+                  onChange={handleFormChange}
+                  placeholder="Old price (₹)"
+                  className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm"
+                />
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
+                <input
+                  required
+                  name="stock"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.stock}
+                  onChange={handleFormChange}
+                  placeholder="Quantity in stock *"
+                  className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm"
+                />
 
-                  if (!file) return;
+                <input
+                  name="categories"
+                  value={formData.categories}
+                  onChange={handleFormChange}
+                  placeholder="Categories (e.g. grocery, snacks)"
+                  className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm"
+                />
+              </div>
 
-                  if (!file.type.startsWith("image/")) {
-                    alert("Please select a valid image file.");
-                    event.target.value = "";
-                    return;
-                  }
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-slate-700">
+                  Product Image
+                </label>
 
-                  setSelectedImage(file);
-                  setImagePreview(URL.createObjectURL(file));
-                }}
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm"
-              />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
 
-              {imagePreview && (
-                <div className="flex items-center gap-4">
-                  <img
-                    src={imagePreview}
-                    alt="Product preview"
-                    className="h-24 w-24 rounded-lg border border-slate-200 object-contain"
-                  />
+                    if (!file.type.startsWith("image/")) {
+                      alert("Please select a valid image file.");
+                      event.target.value = "";
+                      return;
+                    }
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedImage(null);
-                      setImagePreview("");
-                      if (fileInputRef.current) {
-                        fileInputRef.current.value = "";
-                      }
-                    }}
-                    className="text-sm font-medium text-red-600 hover:text-red-700"
+                    setSelectedImage(file);
+                    setImagePreview(URL.createObjectURL(file));
+                  }}
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm"
+                />
+
+                {imagePreview && (
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={imagePreview}
+                      alt="Product preview"
+                      className="h-24 w-24 rounded-lg border border-slate-200 object-contain"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedImage(null);
+                        setImagePreview("");
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = "";
+                        }
+                      }}
+                      className="text-sm font-medium text-red-600 hover:text-red-700"
+                    >
+                      Remove image
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Product Description
+                </label>
+                <textarea
+                  name="description"
+                  rows={3}
+                  value={formData.description}
+                  onChange={handleFormChange}
+                  placeholder="Describe your product..."
+                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-x-6 gap-y-3 border-t border-slate-100 pt-4">
+                {[
+                  { name: "featured", label: "Featured product" },
+                  { name: "isPremium", label: "Premium Product" },
+                  { name: "isNewLaunch", label: "New Launch" },
+                ].map((item) => (
+                  <label
+                    key={item.name}
+                    className="flex items-center gap-2 text-sm text-slate-700"
                   >
-                    Remove image
-                  </button>
-                </div>
-              )}
-            </div>
+                    <input
+                      name={item.name}
+                      type="checkbox"
+                      checked={Boolean(formData[item.name])}
+                      onChange={handleFormChange}
+                    />
+                    {item.label}
+                  </label>
+                ))}
+              </div>
 
-            <input
-              name="categories"
-              value={formData.categories}
-              onChange={handleFormChange}
-              placeholder="Categories (e.g. grocery, snacks)"
-              className="rounded-lg border border-slate-300 px-4 py-3 text-sm sm:col-span-2"
-            />
+              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setEditingProduct(null);
+                  }}
+                  className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-lg bg-orange-500 px-5 py-3 text-sm font-semibold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {saving
+                    ? "Saving..."
+                    : editingProduct
+                      ? "Save Changes"
+                      : "Save Product"}
+                </button>
+              </div>
+            </form>
           </div>
-
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              name="featured"
-              type="checkbox"
-              checked={formData.featured}
-              onChange={handleFormChange}
-            />
-            Featured product
-          </label>
-
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              name="isPremium"
-              type="checkbox"
-              checked={formData.isPremium}
-              onChange={handleFormChange}
-            />
-            Premium Product
-          </label>
-
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              name="isNewLaunch"
-              type="checkbox"
-              checked={formData.isNewLaunch}
-              onChange={handleFormChange}
-            />
-            New Launch
-          </label>
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-lg bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {saving
-              ? "Saving..."
-              : editingProduct
-                ? "Save Changes"
-                : "Save Product"}
-          </button>
-        </form>
+        </div>
       )}
 
       {/* Search */}
@@ -545,6 +618,8 @@ function AdminProducts() {
                   <th className="px-5 py-4">Weight</th>
                   <th className="px-5 py-4">Price</th>
                   <th className="px-5 py-4">Old Price</th>
+                  <th className="px-5 py-4">STOCK</th>
+                  <th className="px-5 py-4">DESCRIPTION</th>
                   <th className="px-5 py-4">Category</th>
                   <th className="px-5 py-4">Actions</th>
                 </tr>
@@ -589,6 +664,16 @@ function AdminProducts() {
                       {product.oldPrice
                         ? `₹${Number(product.oldPrice).toLocaleString("en-IN")}`
                         : "—"}
+                    </td>
+                    <td className="px-5 py-4">{product.stock ?? 0}</td>
+
+                    <td className="px-5 py-4 max-w-xs">
+                      <span
+                        className="block truncate"
+                        title={product.description || ""}
+                      >
+                        {product.description || "—"}
+                      </span>
                     </td>
 
                     <td className="px-5 py-4 text-slate-600">

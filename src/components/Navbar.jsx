@@ -89,7 +89,7 @@ function Navbar() {
         return response.json();
       })
       .then((data) => {
-        setSelectedCategoryProducts(data.slice(0, 4));
+        setSelectedCategoryProducts(data);
       })
       .catch((error) => {
         console.error("Category preview error:", error);
@@ -116,8 +116,16 @@ function Navbar() {
     "Contact",
   ];
 
-  // All Categories
+  // All Categories — Blue Menu
   const allCategoryMenu = [
+    { name: "Electronics", icon: "fa-tv" },
+    { name: "Sports", icon: "fa-futbol" },
+    { name: "Accessories", icon: "fa-headphones" },
+    { name: "Fashion", icon: "fa-shirt" },
+    { name: "Beauty", icon: "fa-spa" },
+    { name: "Furniture", icon: "fa-couch" },
+    { name: "Meats & Seafood", icon: "fa-fish" },
+    { name: "Pet Shop", icon: "fa-paw" },
     { name: "Milk & Dairy Products", icon: "fa-bottle-water" },
     { name: "Wines & Soft Drinks", icon: "fa-wine-glass" },
     { name: "Grocery & Staples", icon: "fa-basket-shopping" },
@@ -204,35 +212,6 @@ function Navbar() {
                 alt="MegaSale Logo"
                 className="w-full h-auto"
               />
-            </div>
-
-            {/* Category Select - Tablet/Desktop */}
-            <div className="hidden md:block shrink-0">
-              <select
-                className="
-                  h-[46px]
-                  lg:h-[51px]
-                  w-[145px]
-                  lg:w-[180px]
-                  rounded-md
-                  border border-gray-300
-                  bg-white
-                  px-3
-                  lg:px-4
-                  text-[13px]
-                  lg:text-[15px]
-                  text-gray-700
-                  outline-none
-                  cursor-pointer
-                  focus:border-blue-500
-                "
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
             </div>
 
             {/* Search */}
@@ -529,7 +508,7 @@ function Navbar() {
               {showCategories && (
                 <div className="absolute left-0 top-[58px] z-50 flex w-[850px] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl">
                   {/* Categories List */}
-                  <div className="w-[280px] shrink-0 border-r border-gray-100 bg-white py-3">
+                  <div className="w-[280px] shrink-0 overflow-y-auto border-r border-gray-100 bg-white py-3 max-h-[420px]">
                     {allCategoryMenu.map((category) => {
                       const isSelected = selectedCategory === category.name;
 
@@ -604,7 +583,11 @@ function Navbar() {
                           >
                             <div className="flex h-[150px] items-center justify-center bg-white p-3">
                               <img
-                                src={product.image}
+                                src={
+                                  product.image?.startsWith("/uploads/")
+                                    ? `http://localhost:5000${product.image}`
+                                    : product.image
+                                }
                                 alt={product.name}
                                 className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
                               />

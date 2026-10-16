@@ -2,12 +2,8 @@ import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 function CartPage() {
-  const {
-    cartItems,
-    increaseQuantity,
-    decreaseQuantity,
-    removeFromCart,
-  } = useCart();
+  const { cartItems, increaseQuantity, decreaseQuantity, removeFromCart } =
+    useCart();
 
   const getPrice = (price) => {
     return Number(String(price).replace(/[^\d.]/g, ""));
@@ -48,9 +44,7 @@ function CartPage() {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-8 text-3xl font-bold text-gray-800">
-          Shopping Cart
-        </h1>
+        <h1 className="mb-8 text-3xl font-bold text-gray-800">Shopping Cart</h1>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Cart Products */}
@@ -63,9 +57,16 @@ function CartPage() {
                 {/* Product Image */}
                 <div className="flex h-28 w-full items-center justify-center rounded-lg bg-gray-100 sm:w-28">
                   <img
-                    src={item.image}
+                    src={
+                      item.image?.startsWith("/uploads/")
+                        ? `http://localhost:5000${item.image}`
+                        : item.image
+                    }
                     alt={item.name}
                     className="h-full w-full rounded-lg object-contain"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
                   />
                 </div>
 
@@ -75,9 +76,7 @@ function CartPage() {
                     {item.name}
                   </h2>
 
-                  <p className="mt-1 text-sm text-gray-500">
-                    {item.weight}
-                  </p>
+                  <p className="mt-1 text-sm text-gray-500">{item.weight}</p>
 
                   <p className="mt-2 font-semibold text-blue-600">
                     ₹ {getPrice(item.price).toFixed(2)}

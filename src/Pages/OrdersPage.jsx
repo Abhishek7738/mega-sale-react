@@ -58,7 +58,15 @@ const getProductImage = (item) => {
       ? item.product.images[0]
       : item.product?.images);
 
-  return typeof image === "string" ? image : "";
+  if (typeof image !== "string" || !image.trim()) {
+    return "";
+  }
+
+  if (image.startsWith("/uploads/")) {
+    return `http://localhost:5000${image}`;
+  }
+
+  return image;
 };
 
 const escapeHtml = (value) =>

@@ -49,6 +49,7 @@ import { WishlistProvider } from "./context/WishlistContext";
 import AdminDashboard from "./Pages/Admin/AdminDashboard";
 import AdminLayout from "./Pages/Admin/AdminLayout";
 import AdminProducts from "./Pages/Admin/AdminProducts";
+import Premium from "./Pages/Premium";
 
 function MainLayout() {
   return (
@@ -141,6 +142,7 @@ function App() {
                   path="category/:categoryName"
                   element={<CategoryPage />}
                 />
+                <Route path="premium" element={<Premium />} />
 
                 <Route path="search" element={<SearchResultsPage />} />
 

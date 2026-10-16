@@ -23,7 +23,11 @@ function ProductCard({ id, name, weight, price, oldPrice, image, featured }) {
 
         {/* Product Image */}
         <img
-          src={image}
+          src={
+            image?.startsWith("/uploads/")
+              ? `http://localhost:5000${image}`
+              : image
+          }
           alt={name}
           className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
         />

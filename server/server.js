@@ -80,7 +80,10 @@ app.get("/api/products", (req, res) => {
     const filter = {};
 
     if (category) {
-        filter.categories = category;
+        filter.categories = {
+            $regex: `^${category}$`,
+            $options: "i",
+        };
     }
 
     if (search) {
@@ -120,6 +123,8 @@ app.post(
                 featured,
                 isPremium,
                 isNewLaunch,
+                description,
+                stock,
             } = req.body;
             console.log("PRODUCT FORM DATA:", req.body);
             console.log("UPLOADED IMAGE:", req.file?.filename);
@@ -146,6 +151,14 @@ app.post(
                     message: "Please enter valid prices.",
                 });
             }
+            const parsedStock =
+                stock === undefined || stock === "" ? 0 : Number(stock);
+
+            if (!Number.isInteger(parsedStock) || parsedStock < 0) {
+                return res.status(400).json({
+                    message: "Stock must be a non-negative whole number.",
+                });
+            }
 
             const parsedCategories = (categories || "")
                 .split(",")
@@ -158,6 +171,8 @@ app.post(
                 price: parsedPrice,
                 image: req.file ? `/uploads/${req.file.filename}` : "",
                 categories: parsedCategories,
+                description: description || "",
+                stock: parsedStock,
                 featured: featured === "true",
                 isPremium: isPremium === "true",
                 isNewLaunch: isNewLaunch === "true",
@@ -215,6 +230,8 @@ app.put(
                 featured,
                 isPremium,
                 isNewLaunch,
+                description,
+                stock,
             } = req.body;
 
             // Validate required fields
@@ -231,6 +248,14 @@ app.put(
                     message: "Please enter a valid price"
                 });
             }
+            const parsedStock =
+                stock === undefined || stock === "" ? 0 : Number(stock);
+
+            if (!Number.isInteger(parsedStock) || parsedStock < 0) {
+                return res.status(400).json({
+                    message: "Stock must be a non-negative whole number.",
+                });
+            }
 
             const updates = {
                 name: name.trim(),
@@ -242,6 +267,8 @@ app.put(
                     .filter(Boolean),
 
                 featured: featured === "true",
+                description: description || "",
+                stock: parsedStock,
                 isPremium: isPremium === "true",
                 isNewLaunch: isNewLaunch === "true"
 
@@ -813,26 +840,74 @@ app.post("/api/orders", authMiddleware, async (req, res) => {
         const calculatedTotal =
             calculatedSubtotal + calculatedDeliveryCharge;
 
-        // 6. Save only backend-calculated amounts
-        const order = await Order.create({
-            user: req.user.userId,
-            items: validatedItems,
-            customer: {
-                name: customer.name.trim(),
-                email: customer.email.trim(),
-                phone: customer.phone.trim(),
-                address: customer.address.trim(),
-            },
-            subtotal: calculatedSubtotal,
-            deliveryCharge: calculatedDeliveryCharge,
-            total: calculatedTotal,
-            paymentMethod,
-        });
 
-        return res.status(201).json({
-            message: "Order placed successfully",
-            order,
-        });
+        // 6. Deduct stock safely and create the order
+        const stockChanges = [];
+
+        try {
+            // First, reserve stock for every ordered product.
+            for (const item of validatedItems) {
+                const updatedProduct = await Product.findOneAndUpdate(
+                    {
+                        _id: item.product,
+                        stock: { $gte: item.quantity },
+                    },
+                    {
+                        $inc: { stock: -item.quantity },
+                    },
+                    { new: true }
+                );
+
+                if (!updatedProduct) {
+                    throw new Error(
+                        `INSUFFICIENT_STOCK:${item.name}`
+                    );
+                }
+
+                stockChanges.push({
+                    product: item.product,
+                    quantity: item.quantity,
+                });
+            }
+
+            // Create the order only after stock is reserved.
+            const order = await Order.create({
+                user: req.user.userId,
+                items: validatedItems,
+                customer: {
+                    name: customer.name.trim(),
+                    email: customer.email.trim(),
+                    phone: customer.phone.trim(),
+                    address: customer.address.trim(),
+                },
+                subtotal: calculatedSubtotal,
+                deliveryCharge: calculatedDeliveryCharge,
+                total: calculatedTotal,
+                paymentMethod,
+            });
+
+            return res.status(201).json({
+                message: "Order placed successfully",
+                order,
+            });
+        } catch (error) {
+            // Restore reserved stock if reservation/order creation fails.
+            for (const change of [...stockChanges].reverse()) {
+                await Product.updateOne(
+                    { _id: change.product },
+                    { $inc: { stock: change.quantity } }
+                );
+            }
+
+            if (error.message?.startsWith("INSUFFICIENT_STOCK:")) {
+                return res.status(409).json({
+                    message: `${error.message.split(":")[1]} has insufficient stock.`,
+                });
+            }
+
+            throw error;
+        }
+
     } catch (error) {
         console.error("Create order error:", error);
 

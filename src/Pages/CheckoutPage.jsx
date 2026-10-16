@@ -14,6 +14,7 @@ function CheckoutPage() {
   });
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState("");
+  const [orderError, setOrderError] = useState("");
 
   useEffect(() => {
     const token =
@@ -125,10 +126,13 @@ function CheckoutPage() {
           },
         });
       } else {
-        console.error("Order failed:", data);
+        setOrderError(
+          data.message || "Unable to place order. Please try again.",
+        );
       }
     } catch (error) {
       console.error("Order error:", error);
+      setOrderError(error.message || "Something went wrong. Please try again.");
     }
   };
 
@@ -275,6 +279,15 @@ function CheckoutPage() {
                   <option value="online">Online Payment</option>
                 </select>
               </div>
+
+              {orderError && (
+                <div
+                  role="alert"
+                  className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  {orderError}
+                </div>
+              )}
 
               <button
                 type="submit"

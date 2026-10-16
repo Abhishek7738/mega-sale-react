@@ -18,6 +18,19 @@ const productSchema = new mongoose.Schema({
     },
     rating: Number,
     categories: [String],
+    description: {
+        type: String,
+        default: "",
+    },
+    stock: {
+        type: Number,
+        default: 0,
+        min: 0,
+        validate: {
+            validator: Number.isInteger,
+            message: "Stock must be a whole number.",
+        },
+    },
 });
 
 const Product = mongoose.model("Product", productSchema);
