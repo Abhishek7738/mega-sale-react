@@ -441,7 +441,7 @@ function AdminProducts() {
                   step="0.01"
                   value={formData.oldPrice}
                   onChange={handleFormChange}
-                  placeholder="Old price (₹)"
+                  placeholder="MRP (₹)"
                   className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm"
                 />
 
@@ -617,7 +617,7 @@ function AdminProducts() {
                   <th className="px-5 py-4">Product</th>
                   <th className="px-5 py-4">Weight</th>
                   <th className="px-5 py-4">Price</th>
-                  <th className="px-5 py-4">Old Price</th>
+                  <th className="px-5 py-4">MRP</th>
                   <th className="px-5 py-4">STOCK</th>
                   <th className="px-5 py-4">DESCRIPTION</th>
                   <th className="px-5 py-4">Category</th>

@@ -50,6 +50,7 @@ import AdminDashboard from "./Pages/Admin/AdminDashboard";
 import AdminLayout from "./Pages/Admin/AdminLayout";
 import AdminProducts from "./Pages/Admin/AdminProducts";
 import Premium from "./Pages/Premium";
+import NewLaunch from "./Pages/NewLaunch";
 
 function MainLayout() {
   return (
@@ -143,6 +144,7 @@ function App() {
                   element={<CategoryPage />}
                 />
                 <Route path="premium" element={<Premium />} />
+                <Route path="new-launch" element={<NewLaunch />} />
 
                 <Route path="search" element={<SearchResultsPage />} />
 
