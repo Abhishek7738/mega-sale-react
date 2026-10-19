@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const Product = require("./models/Product");
 const User = require("./models/User");
 const Order = require("./models/Order");
+const PaymentAttempt = require("./models/PaymentAttempt");
 const Wishlist = require("./models/Wishlist");
 const Contact = require("./models/Contact");
 const bcrypt = require("bcrypt");
@@ -15,11 +16,16 @@ const authMiddleware = require("./middleware/auth");
 const adminMiddleware = require("./middleware/adminMiddleware");
 const sendEmail = require("./utils/sendEmail");
 const crypto = require("crypto");
+const Razorpay = require("razorpay");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 app.use(cors());
 app.use(express.json());
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 const uploadDir = path.join(__dirname, "uploads");
 
@@ -722,6 +728,423 @@ app.put("/api/profile", authMiddleware, async (req, res) => {
         });
     }
 });
+
+
+/* Create Razorpay Payment Order */
+app.post("/api/payment/create-order", authMiddleware, async (req, res) => {
+    try {
+        const { items, customer } = req.body;
+
+        // 1. Validate checkout details
+        if (
+            !Array.isArray(items) ||
+            items.length === 0 ||
+            !customer ||
+            !customer.name?.trim() ||
+            !customer.email?.trim() ||
+            !customer.phone?.trim() ||
+            !customer.address?.trim()
+        ) {
+            return res.status(400).json({
+                message: "Complete checkout details are required",
+            });
+        }
+
+        // 2. Validate product IDs and quantities
+        const quantityMap = new Map();
+
+        for (const item of items) {
+            if (
+                !item.product ||
+                !mongoose.isValidObjectId(item.product) ||
+                !Number.isSafeInteger(item.quantity) ||
+                item.quantity < 1
+            ) {
+                return res.status(400).json({
+                    message: "Invalid product ID or quantity",
+                });
+            }
+
+            const productId = item.product.toString();
+            const newQuantity =
+                (quantityMap.get(productId) || 0) + item.quantity;
+
+            if (!Number.isSafeInteger(newQuantity)) {
+                return res.status(400).json({
+                    message: "Invalid product quantity",
+                });
+            }
+
+            quantityMap.set(productId, newQuantity);
+        }
+
+        const validatedItems = Array.from(
+            quantityMap,
+            ([product, quantity]) => ({
+                product,
+                quantity,
+            })
+        );
+
+        // 3. Fetch actual products and prices from MongoDB
+        const products = await Product.find({
+            _id: { $in: validatedItems.map((item) => item.product) },
+        });
+
+        const productMap = new Map(
+            products.map((product) => [
+                product._id.toString(),
+                product,
+            ])
+        );
+
+        let subtotal = 0;
+
+        for (const item of validatedItems) {
+            const product = productMap.get(item.product);
+
+            if (!product) {
+                return res.status(400).json({
+                    message: "One or more products were not found",
+                });
+            }
+
+            if (
+                !Number.isSafeInteger(product.price) ||
+                product.price < 0
+            ) {
+                return res.status(400).json({
+                    message: "Invalid product price",
+                });
+            }
+
+            // Check current stock; stock is not deducted here.
+            if (
+                !Number.isSafeInteger(product.stock) ||
+                product.stock < item.quantity
+            ) {
+                return res.status(409).json({
+                    message: `${product.name} has insufficient stock.`,
+                });
+            }
+
+            const itemTotal = product.price * item.quantity;
+
+            if (!Number.isSafeInteger(itemTotal)) {
+                return res.status(400).json({
+                    message: "Invalid order amount",
+                });
+            }
+
+            subtotal += itemTotal;
+        }
+
+        if (!Number.isSafeInteger(subtotal) || subtotal <= 0) {
+            return res.status(400).json({
+                message: "Invalid payment subtotal",
+            });
+        }
+
+        // 4. Calculate total on the server
+        const deliveryCharge = 40;
+        const total = subtotal + deliveryCharge;
+        const amountInPaise = total * 100;
+
+        if (!Number.isSafeInteger(amountInPaise)) {
+            return res.status(400).json({
+                message: "Invalid payment amount",
+            });
+        }
+
+        // 5. Create Razorpay order
+        const paymentOrder = await razorpay.orders.create({
+            amount: amountInPaise,
+            currency: "INR",
+            receipt: `user_${req.user.userId}_${Date.now()}`,
+            notes: {
+                userId: req.user.userId.toString(),
+            },
+        });
+
+        // 6. Save the server-side payment attempt
+        try {
+            await PaymentAttempt.create({
+                user: req.user.userId,
+                razorpayOrderId: paymentOrder.id,
+                items: validatedItems,
+                customer: {
+                    name: customer.name.trim(),
+                    email: customer.email.trim(),
+                    phone: customer.phone.trim(),
+                    address: customer.address.trim(),
+                },
+                subtotal,
+                deliveryCharge,
+                total,
+                paymentMethod: "Razorpay",
+                status: "Pending",
+            });
+        } catch (saveError) {
+            // Prevent an untracked payment order from being used.
+            console.error("Save payment attempt error:", saveError);
+
+            return res.status(500).json({
+                message:
+                    "Unable to save payment details. Please try again.",
+            });
+        }
+
+        return res.status(201).json({
+            message: "Payment order created",
+            keyId: process.env.RAZORPAY_KEY_ID,
+            razorpayOrderId: paymentOrder.id,
+            amount: paymentOrder.amount,
+            currency: paymentOrder.currency,
+        });
+    } catch (error) {
+        console.error("Create Razorpay order error:", error);
+
+        return res.status(500).json({
+            message: "Unable to create payment order",
+        });
+    }
+});
+
+/* Verify Razorpay Payment */
+app.post(
+    "/api/payment/verify",
+    authMiddleware,
+    async (req, res) => {
+        try {
+            const {
+                razorpay_order_id,
+                razorpay_payment_id,
+                razorpay_signature,
+            } = req.body;
+
+            // 1. Validate required payment details
+            if (
+                typeof razorpay_order_id !== "string" ||
+                typeof razorpay_payment_id !== "string" ||
+                typeof razorpay_signature !== "string"
+            ) {
+                return res.status(400).json({
+                    message: "Payment verification details are required",
+                });
+            }
+
+            // 2. Find this user's saved payment attempt
+            const attempt = await PaymentAttempt.findOne({
+                user: req.user.userId,
+                razorpayOrderId: razorpay_order_id,
+            });
+
+            if (!attempt) {
+                return res.status(404).json({
+                    message: "Payment attempt not found",
+                });
+            }
+
+            // 3. Check the Razorpay signature
+            const expectedSignature = crypto
+                .createHmac(
+                    "sha256",
+                    process.env.RAZORPAY_KEY_SECRET
+                )
+                .update(
+                    `${razorpay_order_id}|${razorpay_payment_id}`
+                )
+                .digest("hex");
+
+            const expectedBuffer = Buffer.from(
+                expectedSignature,
+                "hex"
+            );
+            const receivedBuffer = Buffer.from(
+                razorpay_signature,
+                "hex"
+            );
+
+            if (
+                !/^[a-fA-F0-9]{64}$/.test(razorpay_signature) ||
+                expectedBuffer.length !== receivedBuffer.length ||
+                !crypto.timingSafeEqual(
+                    expectedBuffer,
+                    receivedBuffer
+                )
+            ) {
+                return res.status(400).json({
+                    message: "Invalid payment signature",
+                });
+            }
+
+            // 4. Check if this payment already created an order
+            const existingOrder = await Order.findOne({
+                razorpayOrderId: razorpay_order_id,
+                user: req.user.userId,
+            });
+
+            if (existingOrder) {
+                return res.status(200).json({
+                    message: "Payment already verified",
+                    order: existingOrder,
+                });
+            }
+
+            if (attempt.status !== "Pending") {
+                return res.status(409).json({
+                    message: "This payment attempt is no longer pending",
+                });
+            }
+
+            // 5. Fetch payment details directly from Razorpay
+            const payment = await razorpay.payments.fetch(
+                razorpay_payment_id
+            );
+
+            if (
+                payment.order_id !== razorpay_order_id ||
+                payment.amount !== attempt.total * 100 ||
+                payment.currency !== "INR" ||
+                payment.status !== "captured"
+            ) {
+                return res.status(400).json({
+                    message: "Payment details could not be verified",
+                });
+            }
+
+            // 6. Recheck stock and reserve it safely
+            const products = await Product.find({
+                _id: {
+                    $in: attempt.items.map((item) => item.product),
+                },
+            });
+
+            const productMap = new Map(
+                products.map((product) => [
+                    product._id.toString(),
+                    product,
+                ])
+            );
+
+            const validatedItems = [];
+
+            for (const item of attempt.items) {
+                const product = productMap.get(
+                    item.product.toString()
+                );
+
+                if (!product) {
+                    return res.status(409).json({
+                        message:
+                            "A purchased product is no longer available. Contact support for a refund.",
+                    });
+                }
+
+                validatedItems.push({
+                    product: product._id,
+                    name: product.name,
+                    image:
+                        product.image ||
+                        product.imageUrl ||
+                        (Array.isArray(product.images)
+                            ? product.images[0]
+                            : product.images) ||
+                        "",
+                    price: product.price,
+                    quantity: item.quantity,
+                });
+            }
+
+            const stockChanges = [];
+
+            try {
+                for (const item of validatedItems) {
+                    const updatedProduct =
+                        await Product.findOneAndUpdate(
+                            {
+                                _id: item.product,
+                                stock: { $gte: item.quantity },
+                            },
+                            {
+                                $inc: {
+                                    stock: -item.quantity,
+                                },
+                            },
+                            { new: true }
+                        );
+
+                    if (!updatedProduct) {
+                        throw new Error(
+                            `INSUFFICIENT_STOCK:${item.name}`
+                        );
+                    }
+
+                    stockChanges.push({
+                        product: item.product,
+                        quantity: item.quantity,
+                    });
+                }
+
+                // 7. Create the paid order from saved server data
+                const order = await Order.create({
+                    user: attempt.user,
+                    items: validatedItems,
+                    customer: attempt.customer,
+                    subtotal: attempt.subtotal,
+                    deliveryCharge: attempt.deliveryCharge,
+                    total: attempt.total,
+                    paymentMethod: "Razorpay",
+                    paymentStatus: "Paid",
+                    orderStatus: "Placed",
+                    razorpayOrderId: razorpay_order_id,
+                    razorpayPaymentId: razorpay_payment_id,
+                });
+
+                attempt.status = "Verified";
+                attempt.razorpayPaymentId = razorpay_payment_id;
+                await attempt.save();
+
+                return res.status(201).json({
+                    message: "Payment verified and order placed",
+                    order,
+                });
+            } catch (error) {
+                // Restore stock if order creation fails.
+                for (const change of [...stockChanges].reverse()) {
+                    await Product.updateOne(
+                        { _id: change.product },
+                        {
+                            $inc: {
+                                stock: change.quantity,
+                            },
+                        }
+                    );
+                }
+
+                if (
+                    error.message?.startsWith(
+                        "INSUFFICIENT_STOCK:"
+                    )
+                ) {
+                    return res.status(409).json({
+                        message:
+                            "Payment was captured, but stock is unavailable. A refund must be arranged.",
+                    });
+                }
+
+                throw error;
+            }
+        } catch (error) {
+            console.error("Payment verification error:", error);
+
+            return res.status(500).json({
+                message: "Unable to verify payment",
+            });
+        }
+    }
+);
+
 
 // Create Order route
 
