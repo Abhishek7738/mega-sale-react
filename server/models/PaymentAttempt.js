@@ -60,7 +60,13 @@ const paymentAttemptSchema = new mongoose.Schema(
 
         status: {
             type: String,
-            enum: ["Pending", "Verifying", "Verified", "Failed"],
+            enum: [
+                "Pending",
+                "Verifying",
+                "Verified",
+                "Failed",
+                "NeedsReview",
+            ],
             default: "Pending",
         },
 

@@ -985,15 +985,54 @@ app.post(
             });
 
             if (existingOrder) {
-                return res.status(200).json({
-                    message: "Payment already verified",
-                    order: existingOrder,
+                if (
+                    existingOrder.paymentStatus === "Paid" &&
+                    existingOrder.razorpayPaymentId === razorpay_payment_id
+                ) {
+                    await PaymentAttempt.updateOne(
+                        {
+                            _id: attempt._id,
+                            user: req.user.userId,
+                            razorpayOrderId: razorpay_order_id,
+                        },
+                        {
+                            $set: {
+                                status: "Verified",
+                                razorpayPaymentId: razorpay_payment_id,
+                            },
+                        }
+                    );
+
+                    return res.status(200).json({
+                        message: "Payment already verified",
+                        order: existingOrder,
+                    });
+                }
+
+                return res.status(409).json({
+                    message: "Existing order requires payment verification review",
                 });
             }
 
-            if (attempt.status !== "Pending") {
+            const claimedAttempt = await PaymentAttempt.findOneAndUpdate(
+                {
+                    _id: attempt._id,
+                    user: req.user.userId,
+                    status: "Pending",
+                },
+                {
+                    $set: {
+                        status: "Verifying",
+                    },
+                },
+                {
+                    new: true,
+                }
+            );
+
+            if (!claimedAttempt) {
                 return res.status(409).json({
-                    message: "This payment attempt is no longer pending",
+                    message: "This payment attempt is already being processed",
                 });
             }
 
@@ -1008,6 +1047,9 @@ app.post(
                 payment.currency !== "INR" ||
                 payment.status !== "captured"
             ) {
+                attempt.status = "Failed";
+                await attempt.save();
+
                 return res.status(400).json({
                     message: "Payment details could not be verified",
                 });
@@ -1035,9 +1077,14 @@ app.post(
                 );
 
                 if (!product) {
+                    await PaymentAttempt.updateOne(
+                        { _id: attempt._id, status: "Verifying" },
+                        { $set: { status: "NeedsReview" } }
+                    );
+
                     return res.status(409).json({
                         message:
-                            "A purchased product is no longer available. Contact support for a refund.",
+                            "Payment was captured, but a product is unavailable. Please contact support for order review and refund handling.",
                     });
                 }
 
@@ -1057,6 +1104,7 @@ app.post(
             }
 
             const stockChanges = [];
+            let orderCreated = false;
 
             try {
                 for (const item of validatedItems) {
@@ -1100,6 +1148,7 @@ app.post(
                     razorpayOrderId: razorpay_order_id,
                     razorpayPaymentId: razorpay_payment_id,
                 });
+                orderCreated = true;
 
                 attempt.status = "Verified";
                 attempt.razorpayPaymentId = razorpay_payment_id;
@@ -1111,32 +1160,51 @@ app.post(
                 });
             } catch (error) {
                 // Restore stock if order creation fails.
-                for (const change of [...stockChanges].reverse()) {
-                    await Product.updateOne(
-                        { _id: change.product },
+                if (!orderCreated) {
+                    for (const change of [...stockChanges].reverse()) {
+                        await Product.updateOne(
+                            { _id: change.product },
+                            {
+                                $inc: {
+                                    stock: change.quantity,
+                                },
+                            }
+                        );
+                    }
+                }
+
+
+                if (
+                    error.message?.startsWith("INSUFFICIENT_STOCK:")
+                ) {
+                    await PaymentAttempt.updateOne(
                         {
-                            $inc: {
-                                stock: change.quantity,
+                            _id: attempt._id,
+                            status: "Verifying",
+                        },
+                        {
+                            $set: {
+                                status: "NeedsReview",
+                                razorpayPaymentId: razorpay_payment_id,
                             },
                         }
                     );
-                }
 
-                if (
-                    error.message?.startsWith(
-                        "INSUFFICIENT_STOCK:"
-                    )
-                ) {
                     return res.status(409).json({
                         message:
-                            "Payment was captured, but stock is unavailable. A refund must be arranged.",
+                            "Payment was captured, but stock is unavailable. Order review and refund handling are required.",
                     });
                 }
+
+               
 
                 throw error;
             }
         } catch (error) {
-            console.error("Payment verification error:", error);
+            console.error("Payment verification error:", {
+                message: error.message,
+                stack: error.stack,
+            });
 
             return res.status(500).json({
                 message: "Unable to verify payment",
