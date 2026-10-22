@@ -703,6 +703,7 @@ function AdminProducts() {
                               featured: Boolean(product.featured),
                               isPremium: Boolean(product.isPremium),
                               isNewLaunch: Boolean(product.isNewLaunch),
+                              stock: String(product.stock ?? 0),
                             });
 
                             setSelectedImage(null);

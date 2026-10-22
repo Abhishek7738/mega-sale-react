@@ -989,7 +989,7 @@ app.post(
                     existingOrder.paymentStatus === "Paid" &&
                     existingOrder.razorpayPaymentId === razorpay_payment_id
                 ) {
-                    await PaymentAttempt.updateOne(
+                    const attemptUpdate = await PaymentAttempt.updateOne(
                         {
                             _id: attempt._id,
                             user: req.user.userId,
@@ -1002,6 +1002,12 @@ app.post(
                             },
                         }
                     );
+                    if (attemptUpdate.matchedCount !== 1) {
+                        return res.status(409).json({
+                            message:
+                                "Order exists, but payment attempt recovery needs review.",
+                        });
+                    }
 
                     return res.status(200).json({
                         message: "Payment already verified",
@@ -1037,24 +1043,71 @@ app.post(
             }
 
             // 5. Fetch payment details directly from Razorpay
-            const payment = await razorpay.payments.fetch(
-                razorpay_payment_id
-            );
+            let payment;
 
-            if (
-                payment.order_id !== razorpay_order_id ||
-                payment.amount !== attempt.total * 100 ||
-                payment.currency !== "INR" ||
-                payment.status !== "captured"
-            ) {
+            try {
+                payment = await razorpay.payments.fetch(
+                    razorpay_payment_id
+                );
+            } catch (fetchError) {
+                console.error("Razorpay payment fetch failed:", {
+                    orderId: razorpay_order_id,
+                    paymentId: razorpay_payment_id,
+                    message: fetchError.message,
+                });
+
+                await PaymentAttempt.updateOne(
+                    {
+                        _id: attempt._id,
+                        status: "Verifying",
+                    },
+                    {
+                        $set: {
+                            status: "NeedsReview",
+                            razorpayPaymentId: razorpay_payment_id,
+                        },
+                    }
+                );
+
+                return res.status(503).json({
+                    message:
+                        "Payment status could not be confirmed. Please contact support before retrying.",
+                });
+            }
+
+            const paymentDetailsMatch =
+                payment.order_id === razorpay_order_id &&
+                payment.amount === attempt.total * 100 &&
+                payment.currency === "INR";
+
+            if (payment.status !== "captured") {
                 attempt.status = "Failed";
                 await attempt.save();
 
                 return res.status(400).json({
-                    message: "Payment details could not be verified",
+                    message: "Payment was not captured",
                 });
             }
 
+            if (!paymentDetailsMatch) {
+                await PaymentAttempt.updateOne(
+                    {
+                        _id: attempt._id,
+                        status: "Verifying",
+                    },
+                    {
+                        $set: {
+                            status: "NeedsReview",
+                            razorpayPaymentId: razorpay_payment_id,
+                        },
+                    }
+                );
+
+                return res.status(409).json({
+                    message:
+                        "Payment was captured, but payment details do not match. Manual review is required.",
+                });
+            }
             // 6. Recheck stock and reserve it safely
             const products = await Product.find({
                 _id: {
@@ -1159,20 +1212,27 @@ app.post(
                     order,
                 });
             } catch (error) {
-                // Restore stock if order creation fails.
+                // Restore stock only if the order was not created.
                 if (!orderCreated) {
                     for (const change of [...stockChanges].reverse()) {
-                        await Product.updateOne(
-                            { _id: change.product },
-                            {
-                                $inc: {
-                                    stock: change.quantity,
-                                },
-                            }
-                        );
+                        try {
+                            await Product.updateOne(
+                                { _id: change.product },
+                                {
+                                    $inc: {
+                                        stock: change.quantity,
+                                    },
+                                }
+                            );
+                        } catch (restoreError) {
+                            console.error("Stock restoration failed:", {
+                                productId: change.product,
+                                quantity: change.quantity,
+                                message: restoreError.message,
+                            });
+                        }
                     }
                 }
-
 
                 if (
                     error.message?.startsWith("INSUFFICIENT_STOCK:")
@@ -1196,7 +1256,7 @@ app.post(
                     });
                 }
 
-               
+
 
                 throw error;
             }

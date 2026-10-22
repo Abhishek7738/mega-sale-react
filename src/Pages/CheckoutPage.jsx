@@ -218,11 +218,20 @@ function CheckoutPage() {
             const verifyData = await verifyResponse.json();
 
             if (!verifyResponse.ok) {
+              if (
+                verifyResponse.status === 409 ||
+                verifyResponse.status === 503
+              ) {
+                throw new Error(
+                  verifyData.message ||
+                    "Payment status needs confirmation. Please contact support before retrying.",
+                );
+              }
+
               throw new Error(
                 verifyData.message || "Payment verification failed.",
               );
             }
-
             clearCart();
             navigate("/thank-you", {
               state: { order: verifyData.order },
