@@ -1813,6 +1813,98 @@ app.get(
 );
 
 
+/* Mark a Razorpay payment as failed after checking Razorpay */
+app.post(
+    "/api/payment/failed",
+    authMiddleware,
+    async (req, res) => {
+        try {
+            const { razorpay_order_id, razorpay_payment_id } = req.body;
+
+            if (
+                typeof razorpay_order_id !== "string" ||
+                typeof razorpay_payment_id !== "string"
+            ) {
+                return res.status(400).json({
+                    message: "Payment details are required",
+                });
+            }
+
+            const attempt = await PaymentAttempt.findOne({
+                user: req.user.userId,
+                razorpayOrderId: razorpay_order_id,
+            });
+
+            if (!attempt) {
+                return res.status(404).json({
+                    message: "Payment attempt not found",
+                });
+            }
+
+            // Never change an already verified payment.
+            if (attempt.status === "Verified") {
+                return res.status(409).json({
+                    message: "This payment is already verified",
+                });
+            }
+
+            // Confirm the payment status directly with Razorpay.
+            const payment = await razorpay.payments.fetch(
+                razorpay_payment_id
+            );
+
+            if (
+                payment.order_id !== razorpay_order_id ||
+                payment.status !== "failed"
+            ) {
+                return res.status(409).json({
+                    message:
+                        "Razorpay has not confirmed this payment as failed",
+                });
+            }
+
+            // Update only a pending attempt; do not overwrite other states.
+            const updatedAttempt = await PaymentAttempt.findOneAndUpdate(
+                {
+                    _id: attempt._id,
+                    user: req.user.userId,
+                    status: "Pending",
+                },
+                {
+                    $set: {
+                        status: "Failed",
+                        razorpayPaymentId: razorpay_payment_id,
+                    },
+                },
+                { new: true }
+            );
+
+            if (!updatedAttempt) {
+                return res.status(409).json({
+                    message:
+                        "Payment attempt is already being processed or needs review",
+                });
+            }
+
+            return res.status(200).json({
+                message: "Failed payment recorded",
+                status: updatedAttempt.status,
+            });
+        } catch (error) {
+            console.error("Record failed payment error:", {
+                message: error.message,
+            });
+
+            return res.status(503).json({
+                message:
+                    "Payment failure could not be confirmed. Please check payment status before retrying.",
+            });
+        }
+    }
+);
+
+
+
 // Start Server
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);

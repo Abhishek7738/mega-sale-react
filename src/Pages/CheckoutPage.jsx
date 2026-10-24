@@ -255,11 +255,48 @@ function CheckoutPage() {
 
       const razorpayCheckout = new window.Razorpay(options);
 
-      razorpayCheckout.on("payment.failed", (failureResponse) => {
+      razorpayCheckout.on("payment.failed", async (failureResponse) => {
         console.error("Razorpay payment failed:", failureResponse.error);
+
+        const error = failureResponse.error;
+        const orderId = error?.metadata?.order_id;
+        const paymentId = error?.metadata?.payment_id;
+
+        if (orderId && paymentId) {
+          try {
+            const response = await fetch(
+              "http://localhost:5000/api/payment/failed",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${
+                    localStorage.getItem("token") ||
+                    sessionStorage.getItem("token") ||
+                    ""
+                  }`,
+                },
+                body: JSON.stringify({
+                  razorpay_order_id: orderId,
+                  razorpay_payment_id: paymentId,
+                }),
+              },
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              console.error("Failed payment status update:", data);
+            } else {
+              console.log("Failed payment recorded:", data);
+            }
+          } catch (updateError) {
+            console.error("Failed payment status request error:", updateError);
+          }
+        }
+
         setOrderError(
-          failureResponse.error?.description ||
-            "Payment failed. Please try again.",
+          error?.description || "Payment failed. Please try again.",
         );
       });
 
