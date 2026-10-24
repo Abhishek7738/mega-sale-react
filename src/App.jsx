@@ -49,6 +49,8 @@ import { WishlistProvider } from "./context/WishlistContext";
 import AdminDashboard from "./Pages/Admin/AdminDashboard";
 import AdminLayout from "./Pages/Admin/AdminLayout";
 import AdminProducts from "./Pages/Admin/AdminProducts";
+import AdminPremium from "./Pages/Admin/AdminPremium";
+import AdminNewLaunch from "./Pages/Admin/AdminNewLaunch";
 import Premium from "./Pages/Premium";
 import NewLaunch from "./Pages/NewLaunch";
 
@@ -127,12 +129,12 @@ function App() {
         <WishlistProvider>
           <BrowserRouter>
             <Routes>
-              
-
               {/* Admin routes: separate from customer layout */}
               <Route path="/admin" element={<AdminRoute />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="products" element={<AdminProducts />} />
+                <Route path="premium" element={<AdminPremium />} />
+                <Route path="new-launch" element={<AdminNewLaunch />} />
               </Route>
 
               {/* Existing customer website routes */}

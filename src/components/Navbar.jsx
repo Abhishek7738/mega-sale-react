@@ -627,7 +627,11 @@ function Navbar() {
                         ? "/"
                         : link === "Contact"
                           ? "/contact"
-                          : "#"
+                          : link === "Premium"
+                            ? "/premium"
+                            : link === "New Launch"
+                              ? "/new-launch"
+                              : "#"
                     }
                     className="
                       group
@@ -1161,7 +1165,11 @@ function Navbar() {
                         ? "/"
                         : link === "Contact"
                           ? "/contact"
-                          : "#"
+                          : link === "Premium"
+                            ? "/premium"
+                            : link === "New Launch"
+                              ? "/new-launch"
+                              : "#"
                     }
                     onClick={() => setShowMenu(false)}
                     className="

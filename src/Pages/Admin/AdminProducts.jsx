@@ -592,8 +592,8 @@ function AdminProducts() {
         />
       </div>
 
-      {/* Products table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      {/* Responsive Products Listing */}
+      <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         {loading ? (
           <p className="p-8 text-center text-slate-500">Loading products...</p>
         ) : error ? (
@@ -601,7 +601,7 @@ function AdminProducts() {
             <p className="text-red-600">{error}</p>
             <button
               type="button"
-              onClick={() => setSearch((previous) => `${previous}`)}
+              onClick={() => setSearch((previous) => `${previous} `)}
               className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white"
             >
               Try again
@@ -610,139 +610,274 @@ function AdminProducts() {
         ) : products.length === 0 ? (
           <p className="p-8 text-center text-slate-500">No products found.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[650px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                <tr>
-                  <th className="px-5 py-4">Product</th>
-                  <th className="px-5 py-4">Weight</th>
-                  <th className="px-5 py-4">Price</th>
-                  <th className="px-5 py-4">MRP</th>
-                  <th className="px-5 py-4">STOCK</th>
-                  <th className="px-5 py-4">DESCRIPTION</th>
-                  <th className="px-5 py-4">Category</th>
-                  <th className="px-5 py-4">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-100">
-                {products.map((product) => (
-                  <tr key={product._id} className="hover:bg-slate-50">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        {product.image ? (
-                          <img
-                            src={
-                              product.image?.startsWith("/uploads/")
-                                ? `http://localhost:5000${product.image}`
-                                : product.image
-                            }
-                            alt={product.name}
-                            className="h-12 w-12 rounded-lg border border-slate-100 object-contain"
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-400">
-                            No image
-                          </div>
-                        )}
-
-                        <span className="font-medium text-slate-800">
-                          {product.name}
-                        </span>
+          <>
+            {/* Mobile and Tablet Product Cards */}
+            <div className="grid grid-cols-1 gap-4 p-3 sm:grid-cols-2 sm:p-4 xl:hidden">
+              {products.map((product) => (
+                <div
+                  key={product._id}
+                  className="min-w-0 rounded-xl border border-slate-200 bg-white p-4"
+                >
+                  <div className="flex min-w-0 items-start gap-4">
+                    {product.image ? (
+                      <img
+                        src={
+                          product.image.startsWith("/uploads/")
+                            ? `${API_BASE}${product.image}`
+                            : product.image
+                        }
+                        alt={product.name}
+                        className="h-28 w-28 shrink-0 rounded-lg border border-slate-100 bg-white p-1 object-contain sm:h-32 sm:w-32"
+                      />
+                    ) : (
+                      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-400">
+                        No image
                       </div>
-                    </td>
+                    )}
 
-                    <td className="px-5 py-4 text-slate-600">
-                      {product.weight || "—"}
-                    </td>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="break-words font-semibold text-slate-900">
+                        {product.name}
+                      </h3>
+                      <p className="mt-1 break-words text-sm text-slate-500">
+                        {product.weight || "Weight not specified"}
+                      </p>
+                      <p className="mt-2 text-lg font-bold text-slate-900">
+                        ₹{Number(product.price || 0).toLocaleString("en-IN")}
+                      </p>
+                      {product.oldPrice != null && product.oldPrice !== "" && (
+                        <p className="text-sm text-slate-500">
+                          MRP: ₹
+                          {Number(product.oldPrice).toLocaleString("en-IN")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-                    <td className="px-5 py-4 font-semibold text-slate-800">
-                      ₹{Number(product.price || 0).toLocaleString("en-IN")}
-                    </td>
+                  <div className="mt-4 space-y-2 border-t border-slate-100 pt-3 text-sm">
+                    <p className="break-words text-slate-600">
+                      <span className="font-semibold text-slate-800">
+                        Stock:
+                      </span>{" "}
+                      {product.stock ?? 0}
+                    </p>
 
-                    <td className="px-5 py-4 text-slate-500">
-                      {product.oldPrice
-                        ? `₹${Number(product.oldPrice).toLocaleString("en-IN")}`
-                        : "—"}
-                    </td>
-                    <td className="px-5 py-4">{product.stock ?? 0}</td>
-
-                    <td className="px-5 py-4 max-w-xs">
-                      <span
-                        className="block truncate"
-                        title={product.description || ""}
-                      >
-                        {product.description || "—"}
-                      </span>
-                    </td>
-
-                    <td className="px-5 py-4 text-slate-600">
-                      {Array.isArray(product.categories)
+                    <p className="break-words text-slate-600">
+                      <span className="font-semibold text-slate-800">
+                        Category:
+                      </span>{" "}
+                      {Array.isArray(product.categories) &&
+                      product.categories.length
                         ? product.categories.join(", ")
                         : "—"}
-                    </td>
+                    </p>
 
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingProduct(product);
-                            setFormData({
-                              name: product.name || "",
-                              weight: product.weight || "",
-                              price: String(product.price ?? ""),
-                              oldPrice:
-                                product.oldPrice != null
-                                  ? String(product.oldPrice)
-                                  : "",
-                              image: product.image || "",
-                              categories: Array.isArray(product.categories)
-                                ? product.categories.join(", ")
-                                : "",
-                              featured: Boolean(product.featured),
-                              isPremium: Boolean(product.isPremium),
-                              isNewLaunch: Boolean(product.isNewLaunch),
-                              stock: String(product.stock ?? 0),
-                            });
+                    <div>
+                      <p className="font-semibold text-slate-800">
+                        Description
+                      </p>
+                      <p className="mt-1 break-words text-slate-600">
+                        {product.description || "—"}
+                      </p>
+                    </div>
+                  </div>
 
-                            setSelectedImage(null);
-                            setImagePreview(
-                              product.image?.startsWith("/uploads/")
-                                ? `${API_BASE}${product.image}`
-                                : product.image || "",
-                            );
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => {
+                        setEditingProduct(product);
+                        setFormData({
+                          name: product.name || "",
+                          weight: product.weight || "",
+                          price: String(product.price ?? ""),
+                          oldPrice:
+                            product.oldPrice != null
+                              ? String(product.oldPrice)
+                              : "",
+                          image: product.image || "",
+                          categories: Array.isArray(product.categories)
+                            ? product.categories.join(", ")
+                            : "",
+                          featured: Boolean(product.featured),
+                          isPremium: Boolean(product.isPremium),
+                          isNewLaunch: Boolean(product.isNewLaunch),
+                          description: product.description || "",
+                          stock: String(product.stock ?? 0),
+                        });
 
-                            if (fileInputRef.current) {
-                              fileInputRef.current.value = "";
-                            }
+                        setSelectedImage(null);
+                        setImagePreview(
+                          product.image?.startsWith("/uploads/")
+                            ? `${API_BASE}${product.image}`
+                            : product.image || "",
+                        );
 
-                            setShowAddForm(true);
-                          }}
-                          className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-100"
-                        >
-                          Edit
-                        </button>
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = "";
+                        }
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleDeleteProduct(
-                              product._id,
-                              product.name || "this product",
-                            )
-                          }
-                          className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
+                        setShowAddForm(true);
+                      }}
+                      className="flex-1 rounded-lg bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() =>
+                        handleDeleteProduct(
+                          product._id,
+                          product.name || "this product",
+                        )
+                      }
+                      className="flex-1 rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Product Table */}
+            <div className="hidden w-full min-w-0 xl:block">
+              <table className="w-full table-fixed text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                  <tr>
+                    <th className="w-[20%] px-3 py-4">Product</th>
+                    <th className="w-[8%] px-2 py-4">Weight</th>
+                    <th className="w-[9%] px-2 py-4">Price</th>
+                    <th className="w-[9%] px-2 py-4">MRP</th>
+                    <th className="w-[7%] px-2 py-4">Stock</th>
+                    <th className="w-[19%] px-2 py-4">Description</th>
+                    <th className="w-[12%] px-2 py-4">Category</th>
+                    <th className="w-[16%] px-2 py-4">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100">
+                  {products.map((product) => (
+                    <tr key={product._id} className="hover:bg-slate-50">
+                      <td className="px-3 py-4">
+                        <div className="flex min-w-0 items-center gap-2">
+                          {product.image ? (
+                            <img
+                              src={
+                                product.image.startsWith("/uploads/")
+                                  ? `${API_BASE}${product.image}`
+                                  : product.image
+                              }
+                              alt={product.name}
+                              className="h-14 w-14 shrink-0 rounded-lg border border-slate-100 bg-white p-1 object-contain"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] text-slate-400">
+                              No image
+                            </div>
+                          )}
+                          <span className="break-words font-medium text-slate-800">
+                            {product.name}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="break-words px-2 py-4 text-slate-600">
+                        {product.weight || "—"}
+                      </td>
+
+                      <td className="break-words px-2 py-4 font-semibold text-slate-800">
+                        ₹{Number(product.price || 0).toLocaleString("en-IN")}
+                      </td>
+
+                      <td className="break-words px-2 py-4 text-slate-500">
+                        {product.oldPrice != null && product.oldPrice !== ""
+                          ? `₹${Number(product.oldPrice).toLocaleString("en-IN")}`
+                          : "—"}
+                      </td>
+
+                      <td className="break-words px-2 py-4">
+                        {product.stock ?? 0}
+                      </td>
+
+                      <td className="break-words px-2 py-4 text-slate-600">
+                        {product.description || "—"}
+                      </td>
+
+                      <td className="break-words px-2 py-4 text-slate-600">
+                        {Array.isArray(product.categories)
+                          ? product.categories.join(", ") || "—"
+                          : "—"}
+                      </td>
+
+                      <td className="px-2 py-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => {
+                              setEditingProduct(product);
+                              setFormData({
+                                name: product.name || "",
+                                weight: product.weight || "",
+                                price: String(product.price ?? ""),
+                                oldPrice:
+                                  product.oldPrice != null
+                                    ? String(product.oldPrice)
+                                    : "",
+                                image: product.image || "",
+                                categories: Array.isArray(product.categories)
+                                  ? product.categories.join(", ")
+                                  : "",
+                                featured: Boolean(product.featured),
+                                isPremium: Boolean(product.isPremium),
+                                isNewLaunch: Boolean(product.isNewLaunch),
+                                description: product.description || "",
+                                stock: String(product.stock ?? 0),
+                              });
+
+                              setSelectedImage(null);
+                              setImagePreview(
+                                product.image?.startsWith("/uploads/")
+                                  ? `${API_BASE}${product.image}`
+                                  : product.image || "",
+                              );
+
+                              if (fileInputRef.current) {
+                                fileInputRef.current.value = "";
+                              }
+
+                              setShowAddForm(true);
+                            }}
+                            className="rounded-lg bg-blue-50 px-2.5 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100 disabled:opacity-50"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() =>
+                              handleDeleteProduct(
+                                product._id,
+                                product.name || "this product",
+                              )
+                            }
+                            className="rounded-lg bg-red-50 px-2.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>
