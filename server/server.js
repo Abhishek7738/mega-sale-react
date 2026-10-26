@@ -1509,6 +1509,87 @@ app.get("/api/orders", authMiddleware, async (req, res) => {
     }
 });
 
+// ================= ADMIN ORDERS API =================
+
+// Get all orders (Admin only)
+app.get(
+    "/api/admin/orders",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const orders = await Order.find()
+                .populate("user", "name email")
+                .populate("items.product", "name image")
+                .sort({ createdAt: -1 });
+
+            return res.json({ orders });
+        } catch (error) {
+            console.error("Admin fetch orders error:", error);
+
+            return res.status(500).json({
+                message: "Error fetching admin orders",
+            });
+        }
+    }
+);
+
+// Update order status (Admin only)
+app.patch(
+    "/api/admin/orders/:id/status",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { orderStatus } = req.body;
+
+            if (!mongoose.isValidObjectId(id)) {
+                return res.status(400).json({
+                    message: "Invalid order ID",
+                });
+            }
+
+            const allowedStatuses = [
+                "Placed",
+                "Processing",
+                "Shipped",
+                "Delivered",
+                "Cancelled",
+            ];
+
+            if (!allowedStatuses.includes(orderStatus)) {
+                return res.status(400).json({
+                    message: "Invalid order status",
+                });
+            }
+
+            const order = await Order.findByIdAndUpdate(
+                id,
+                { $set: { orderStatus } },
+                { new: true, runValidators: true }
+            );
+
+            if (!order) {
+                return res.status(404).json({
+                    message: "Order not found",
+                });
+            }
+
+            return res.json({
+                message: "Order status updated successfully",
+                order,
+            });
+        } catch (error) {
+            console.error("Admin update order status error:", error);
+
+            return res.status(500).json({
+                message: "Error updating order status",
+            });
+        }
+    }
+);
+
 /* Wishlist Routes */
 
 // Get logged-in user's wishlist
