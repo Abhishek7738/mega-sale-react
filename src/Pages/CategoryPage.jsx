@@ -9,28 +9,27 @@ function CategoryPage() {
 
   const [categoryProducts, setCategoryProducts] = useState([]);
 
-
   useEffect(() => {
-  fetch(
-    `http://localhost:5000/api/products?category=${encodeURIComponent(
-      formattedCategory.toLowerCase()
-    )}`
-  )
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Failed to fetch category products");
-      }
+    fetch(
+      `http://localhost:5000/api/products?category=${encodeURIComponent(
+        formattedCategory.toLowerCase(),
+      )}`,
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch category products");
+        }
 
-      return response.json();
-    })
-    .then((data) => {
-      setCategoryProducts(data);
-    })
-    .catch((error) => {
-      console.error("Category products error:", error);
-      setCategoryProducts([]);
-    });
-}, [formattedCategory]);
+        return response.json();
+      })
+      .then((data) => {
+        setCategoryProducts(data);
+      })
+      .catch((error) => {
+        console.error("Category products error:", error);
+        setCategoryProducts([]);
+      });
+  }, [formattedCategory]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -71,6 +70,7 @@ function CategoryPage() {
               oldPrice={product.oldPrice}
               image={product.image}
               featured={product.featured}
+              stock={product.stock}
             />
           ))}
         </div>

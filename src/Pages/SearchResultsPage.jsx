@@ -15,7 +15,7 @@ function SearchResultsPage() {
     }
 
     fetch(
-      `http://localhost:5000/api/products?search=${encodeURIComponent(searchQuery)}`
+      `http://localhost:5000/api/products?search=${encodeURIComponent(searchQuery)}`,
     )
       .then((response) => response.json())
       .then((data) => {
@@ -50,14 +50,13 @@ function SearchResultsPage() {
                 oldPrice={product.oldPrice}
                 image={product.image}
                 featured={product.featured}
+                stock={product.stock}
               />
             ))}
           </div>
         ) : (
           <div className="rounded-xl bg-white p-10 text-center shadow-sm">
-            <p className="text-lg text-slate-500">
-              No products found.
-            </p>
+            <p className="text-lg text-slate-500">No products found.</p>
           </div>
         )}
       </div>

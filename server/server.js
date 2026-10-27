@@ -322,7 +322,99 @@ app.put(
     }
 );
 
+// Update Product Stock - Admin Only
+app.patch(
+    "/api/products/:id/stock",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { action, quantity } = req.body;
 
+            // Validate product ID
+            if (!mongoose.isValidObjectId(id)) {
+                return res.status(400).json({
+                    message: "Invalid product ID",
+                });
+            }
+
+            // Validate action
+            if (!["add", "remove"].includes(action)) {
+                return res.status(400).json({
+                    message: "Action must be add or remove.",
+                });
+            }
+
+            // Validate quantity
+            const amount = Number(quantity);
+
+            if (
+                !Number.isSafeInteger(amount) ||
+                amount <= 0
+            ) {
+                return res.status(400).json({
+                    message: "Quantity must be a positive whole number.",
+                });
+            }
+
+            const product = await Product.findById(id);
+
+            if (!product) {
+                return res.status(404).json({
+                    message: "Product not found.",
+                });
+            }
+
+            const currentStock = Number(product.stock ?? 0);
+
+            if (
+                !Number.isSafeInteger(currentStock) ||
+                currentStock < 0
+            ) {
+                return res.status(400).json({
+                    message: "Current product stock is invalid.",
+                });
+            }
+
+            if (action === "remove" && amount > currentStock) {
+                return res.status(400).json({
+                    message: "Cannot remove more stock than available.",
+                    currentStock,
+                });
+            }
+
+            const newStock =
+                action === "add"
+                    ? currentStock + amount
+                    : currentStock - amount;
+
+            if (!Number.isSafeInteger(newStock)) {
+                return res.status(400).json({
+                    message: "Stock quantity is too large.",
+                });
+            }
+
+            // Save updated stock in MongoDB
+            product.stock = newStock;
+            await product.save();
+
+            return res.json({
+                message: "Product stock updated successfully.",
+                productId: product._id,
+                name: product.name,
+                previousStock: currentStock,
+                stock: product.stock,
+            });
+        } catch (error) {
+            console.error("Stock update error:", error);
+
+            return res.status(500).json({
+                message: "Error updating product stock.",
+            });
+        }
+    }
+);
 
 /* Delete Product — Admin Only */
 app.delete(

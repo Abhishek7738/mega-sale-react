@@ -3,11 +3,23 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useNavigate } from "react-router-dom";
 
-function ProductCard({ id, name, weight, price, oldPrice, image, featured }) {
+function ProductCard({
+  id,
+  name,
+  weight,
+  price,
+  oldPrice,
+  image,
+  featured,
+  stock,
+}) {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isWishlisted } = useWishlist();
 
   const navigate = useNavigate();
+  const currentStock = Number(stock ?? 0);
+  const isOutOfStock = currentStock <= 0;
+  const isLowStock = currentStock > 0 && currentStock <= 5;
   const [wishlistLoading, setWishlistLoading] = React.useState(false);
 
   return (
@@ -130,7 +142,15 @@ function ProductCard({ id, name, weight, price, oldPrice, image, featured }) {
             <i className="fa-regular fa-star"></i>
           </span>
 
-          <span className="text-blue-600">In Stock</span>
+          {isOutOfStock ? (
+            <span className="font-semibold text-red-600">Out of Stock</span>
+          ) : isLowStock ? (
+            <span className="font-semibold text-orange-600">
+              Only {currentStock} left!
+            </span>
+          ) : (
+            <span className="text-green-600">In Stock</span>
+          )}
         </div>
 
         {/* Add to Cart */}
@@ -139,6 +159,7 @@ function ProductCard({ id, name, weight, price, oldPrice, image, featured }) {
 
           <button
             type="button"
+            disabled={isOutOfStock}
             onClick={() =>
               addToCart({
                 id,
@@ -148,9 +169,15 @@ function ProductCard({ id, name, weight, price, oldPrice, image, featured }) {
                 oldPrice,
                 image,
                 featured,
+                stock,
               })
             }
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-lg text-white transition-colors hover:bg-blue-700"
+            className={`flex h-8 w-8 items-center justify-center rounded-full text-lg text-white transition-colors ${
+              isOutOfStock
+                ? "cursor-not-allowed bg-gray-400"
+                : "bg-blue-600 hover:bg-blue-700"
+            }`}
+            title={isOutOfStock ? "Out of Stock" : "Add to Cart"}
           >
             <i className="fa-solid fa-plus"></i>
           </button>

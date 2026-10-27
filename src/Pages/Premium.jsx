@@ -197,6 +197,7 @@ function Premium() {
                       : product.image
                   }
                   featured={product.featured}
+                  stock={product.stock}
                 />
               </div>
             ))}

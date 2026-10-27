@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 
 function OrganicVegetablesSection() {
-  const [organicVegetableProducts, setOrganicVegetableProducts] =
-    useState([]);
+  const [organicVegetableProducts, setOrganicVegetableProducts] = useState([]);
 
   useEffect(() => {
     fetch(
-      "http://localhost:5000/api/products?category=vegetables%20%26%20fruits"
+      "http://localhost:5000/api/products?category=vegetables%20%26%20fruits",
     )
       .then((response) => {
         if (!response.ok) {
@@ -16,10 +15,10 @@ function OrganicVegetablesSection() {
         return response.json();
       })
       .then((data) => {
-  setOrganicVegetableProducts(
-    data.filter((product) => product.name !== "Organic Oranges")
-  );
-})
+        setOrganicVegetableProducts(
+          data.filter((product) => product.name !== "Organic Oranges"),
+        );
+      })
       .catch((error) => {
         console.error("Organic vegetables error:", error);
         setOrganicVegetableProducts([]);
@@ -46,6 +45,7 @@ function OrganicVegetablesSection() {
                 oldPrice={product.oldPrice}
                 image={product.image}
                 featured={product.featured}
+                stock={product.stock}
               />
             </div>
           ))}

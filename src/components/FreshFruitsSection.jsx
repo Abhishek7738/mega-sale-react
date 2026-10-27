@@ -5,7 +5,9 @@ function FreshFruitsSection() {
   const [freshFruitProducts, setFreshFruitProducts] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/products?category=vegetables%20%26%20fruits")
+    fetch(
+      "http://localhost:5000/api/products?category=vegetables%20%26%20fruits",
+    )
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to fetch fruit products");
@@ -15,8 +17,8 @@ function FreshFruitsSection() {
       .then((data) => {
         setFreshFruitProducts(
           data.filter((product) =>
-            ["Organic Oranges", "Nature's Sweet Banana"].includes(product.name)
-          )
+            ["Organic Oranges", "Nature's Sweet Banana"].includes(product.name),
+          ),
         );
       })
       .catch((error) => {
@@ -44,6 +46,7 @@ function FreshFruitsSection() {
               oldPrice={product.oldPrice}
               image={product.image}
               featured={product.featured}
+              stock={product.stock}
             />
           ))}
         </div>

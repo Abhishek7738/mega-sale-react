@@ -2,8 +2,14 @@ import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 
 function CartPage() {
-  const { cartItems, increaseQuantity, decreaseQuantity, removeFromCart } =
-    useCart();
+  const {
+    cartItems,
+    increaseQuantity,
+    decreaseQuantity,
+    removeFromCart,
+    cartError,
+    clearCartError,
+  } = useCart();
 
   const getPrice = (price) => {
     return Number(String(price).replace(/[^\d.]/g, ""));
@@ -45,6 +51,26 @@ function CartPage() {
     <div className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="mx-auto max-w-6xl">
         <h1 className="mb-8 text-3xl font-bold text-gray-800">Shopping Cart</h1>
+        {cartError && (
+          <div
+            role="alert"
+            className="mb-5 flex items-start justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          >
+            <div className="flex items-start gap-2">
+              <i className="fa-solid fa-circle-exclamation mt-0.5"></i>
+              <p>{cartError}</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={clearCartError}
+              className="font-bold text-red-700 hover:text-red-900"
+              aria-label="Dismiss error message"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Cart Products */}

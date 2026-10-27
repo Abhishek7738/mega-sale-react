@@ -4,20 +4,34 @@ const CartContext = createContext();
 
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
+  const [cartError, setCartError] = useState("");
 
   const addToCart = (product) => {
-    setCartItems((previousItems) => {
-      const existingProduct = previousItems.find(
-        (item) => item.id === product.id,
-      );
+    const stock = Number(product.stock ?? 0);
 
-      if (existingProduct) {
+    if (stock <= 0) {
+      setCartError(`${product.name} is currently out of stock.`);
+      return;
+    }
+
+    const existingProduct = cartItems.find((item) => item.id === product.id);
+
+    if (existingProduct && existingProduct.quantity >= stock) {
+      setCartError(
+        `Only ${stock} units of ${product.name} are available. Please reduce the quantity to continue.`,
+      );
+      return;
+    }
+
+    setCartError("");
+
+    setCartItems((previousItems) => {
+      const existing = previousItems.find((item) => item.id === product.id);
+
+      if (existing) {
         return previousItems.map((item) =>
           item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + 1,
-              }
+            ? { ...item, quantity: item.quantity + 1, stock }
             : item,
         );
       }
@@ -26,6 +40,7 @@ export function CartProvider({ children }) {
         ...previousItems,
         {
           ...product,
+          stock,
           quantity: 1,
         },
       ];
@@ -33,42 +48,60 @@ export function CartProvider({ children }) {
   };
 
   const increaseQuantity = (productId) => {
+    const item = cartItems.find((product) => product.id === productId);
+
+    if (!item) return;
+
+    const stock = Number(item.stock ?? 0);
+
+    if (item.quantity >= stock) {
+      setCartError(
+        `Only ${stock} units of ${item.name} are available. You cannot add more than this.`,
+      );
+      return;
+    }
+
+    setCartError("");
+
     setCartItems((previousItems) =>
-      previousItems.map((item) =>
-        item.id === productId
-          ? {
-              ...item,
-              quantity: item.quantity + 1,
-            }
-          : item,
+      previousItems.map((product) =>
+        product.id === productId
+          ? { ...product, quantity: product.quantity + 1 }
+          : product,
       ),
     );
   };
 
   const decreaseQuantity = (productId) => {
+    setCartError("");
+
     setCartItems((previousItems) =>
       previousItems
         .map((item) =>
           item.id === productId
-            ? {
-                ...item,
-                quantity: item.quantity - 1,
-              }
+            ? { ...item, quantity: item.quantity - 1 }
             : item,
         )
         .filter((item) => item.quantity > 0),
     );
   };
-  
-    const removeFromCart = (productId) => {
+
+  const removeFromCart = (productId) => {
+    setCartError("");
+
     setCartItems((previousItems) =>
       previousItems.filter((item) => item.id !== productId),
     );
   };
 
   const clearCart = () => {
-  setCartItems([]);
-};
+    setCartItems([]);
+    setCartError("");
+  };
+
+  const clearCartError = () => {
+    setCartError("");
+  };
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
@@ -82,6 +115,9 @@ export function CartProvider({ children }) {
         removeFromCart,
         clearCart,
         cartCount,
+        cartError,
+        setCartError,
+        clearCartError,
       }}
     >
       {children}

@@ -41,6 +41,7 @@ function TopSellingSection() {
               oldPrice={product.oldPrice}
               image={product.image}
               featured={product.featured}
+              stock={product.stock}
             />
           ))}
         </div>
