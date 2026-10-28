@@ -2077,6 +2077,180 @@ app.post(
 );
 
 
+// Admin: Get all registered customers with order statistics
+app.get("/api/admin/customers", authMiddleware, async (req, res) => {
+    try {
+        // Verify admin access from the database
+        const admin = await User.findById(req.user.userId).select("role");
+
+        if (!admin || admin.role !== "admin") {
+            return res.status(403).json({
+                message: "Admin access required",
+            });
+        }
+
+        // Fetch customers only; never return password/reset-token fields
+        const customers = await User.find({
+            role: { $ne: "admin" },
+        })
+            .select("-password -resetPasswordToken -resetPasswordExpires")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        console.log("Customers fetched:", customers.length);
+        
+        const customerIds = customers.map((customer) => customer._id);
+
+        // Calculate each customer's order count and total spending
+        const orderStats = await Order.aggregate([
+            {
+                $match: {
+                    user: { $in: customerIds },
+                },
+            },
+            {
+                $group: {
+                    _id: "$user",
+                    totalOrders: { $sum: 1 },
+                    totalSpent: { $sum: "$total" },
+                },
+            },
+        ]);
+
+        const orderStatsMap = new Map(
+            orderStats.map((stat) => [
+                stat._id.toString(),
+                {
+                    totalOrders: stat.totalOrders,
+                    totalSpent: stat.totalSpent,
+                },
+            ])
+        );
+
+        const customersWithStats = customers.map((customer) => {
+            const stats = orderStatsMap.get(customer._id.toString());
+
+            return {
+                ...customer,
+                isActive: customer.isActive !== false,
+                totalOrders: stats?.totalOrders || 0,
+                totalSpent: stats?.totalSpent || 0,
+                joinedOn: customer.createdAt || null,
+            };
+        });
+
+        return res.status(200).json({
+            customers: customersWithStats,
+            total: customersWithStats.length,
+        });
+    } catch (error) {
+        console.error("Fetch customers error:", error);
+
+        return res.status(500).json({
+            message: "Failed to fetch customers",
+        });
+    }
+});
+
+// Admin: Update customer active/inactive status
+app.patch(
+    "/api/admin/customers/:id/status",
+    authMiddleware,
+    async (req, res) => {
+        try {
+            if (req.user.role !== "admin") {
+                return res.status(403).json({
+                    message: "Admin access required",
+                });
+            }
+
+            const { isActive } = req.body;
+
+            if (typeof isActive !== "boolean") {
+                return res.status(400).json({
+                    message: "isActive must be true or false",
+                });
+            }
+
+            const customer = await User.findOneAndUpdate(
+                {
+                    _id: req.params.id,
+                    role: "customer",
+                },
+                { $set: { isActive } },
+                { new: true, runValidators: true }
+            ).select("-password -resetPasswordToken -resetPasswordExpires");
+
+            if (!customer) {
+                return res.status(404).json({
+                    message: "Customer not found",
+                });
+            }
+
+            res.status(200).json({
+                message: `Customer marked as ${isActive ? "Active" : "Inactive"}`,
+                customer,
+            });
+        } catch (error) {
+            console.error("Update customer status error:", error);
+
+            if (error.name === "CastError") {
+                return res.status(400).json({
+                    message: "Invalid customer ID",
+                });
+            }
+
+            res.status(500).json({
+                message: "Failed to update customer status",
+            });
+        }
+    }
+);
+
+app.get("/api/admin/customers/stats", authMiddleware, async (req, res) => {
+    try {
+        const admin = await User.findById(req.user.userId).select("role");
+
+        if (!admin || admin.role !== "admin") {
+            return res.status(403).json({
+                message: "Admin access required",
+            });
+        }
+
+        const customers = await User.find({
+            role: { $ne: "admin" },
+        }).select("_id");
+
+        const customerIds = customers.map((customer) => customer._id);
+
+        const orderStats = await Order.aggregate([
+            {
+                $match: {
+                    user: { $in: customerIds },
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalOrders: { $sum: 1 },
+                    totalRevenue: { $sum: "$total" },
+                },
+            },
+        ]);
+
+        res.status(200).json({
+            totalCustomers: customers.length,
+            totalOrders: orderStats[0]?.totalOrders || 0,
+            totalRevenue: orderStats[0]?.totalRevenue || 0,
+        });
+    } catch (error) {
+        console.error("Customer statistics error:", error);
+
+        res.status(500).json({
+            message: "Failed to fetch customer statistics",
+        });
+    }
+});
 
 // Start Server
 app.listen(port, () => {

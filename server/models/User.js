@@ -6,11 +6,17 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true,
     },
-        role: {
+    role: {
         type: String,
         enum: ["customer", "admin"],
         default: "customer",
     },
+    
+    isActive: {
+        type: Boolean,
+        default: true,
+    },
+
     email: {
         type: String,
         trim: true,

@@ -53,6 +53,7 @@ import AdminPremium from "./Pages/Admin/AdminPremium";
 import AdminNewLaunch from "./Pages/Admin/AdminNewLaunch";
 import AdminOrders from "./Pages/Admin/AdminOrders";
 import AdminInventory from "./Pages/Admin/AdminInventory";
+import AdminCustomers from "./Pages/Admin/AdminCustomers";
 import Premium from "./Pages/Premium";
 import NewLaunch from "./Pages/NewLaunch";
 
@@ -139,6 +140,7 @@ function App() {
                 <Route path="new-launch" element={<AdminNewLaunch />} />
                 <Route path="orders" element={<AdminOrders />} />
                 <Route path="inventory" element={<AdminInventory />} />
+                <Route path="customers" element={<AdminCustomers />} />
               </Route>
 
               {/* Existing customer website routes */}
