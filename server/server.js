@@ -1,10 +1,10 @@
 require("dotenv").config();
-
 const express = require("express");
 const cors = require("cors");
 const app = express();
 const mongoose = require("mongoose");
 const Product = require("./models/Product");
+const Category = require("./models/Category");
 const User = require("./models/User");
 const Order = require("./models/Order");
 const PaymentAttempt = require("./models/PaymentAttempt");
@@ -79,6 +79,7 @@ app.get("/api/health", (req, res) => {
         message: "Backend is running successfully"
     });
 });
+
 // Get Products
 app.get("/api/products", (req, res) => {
     const { category, search } = req.query;
@@ -110,6 +111,248 @@ app.get("/api/products", (req, res) => {
             });
         });
 });
+
+// Get Active Categories
+app.get("/api/categories", async (req, res) => {
+    try {
+        const categories = await Category.find({
+            status: "Active"
+        }).sort({ name: 1 });
+
+        res.json(categories);
+    } catch (error) {
+        res.status(500).json({
+            message: "Error fetching categories",
+            error: error.message
+        });
+    }
+});
+
+// Get All Categories for Admin
+app.get(
+    "/api/admin/categories",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const categories = await Category.find().sort({
+                createdAt: -1,
+            });
+
+            res.json(categories);
+        } catch (error) {
+            res.status(500).json({
+                message: "Error fetching admin categories",
+                error: error.message,
+            });
+        }
+    }
+);
+
+// Create Category (Admin Only)
+app.post(
+    "/api/categories",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const { name, description, icon, image, status } = req.body;
+
+            if (!name || !name.trim()) {
+                return res.status(400).json({
+                    message: "Category name is required.",
+                });
+            }
+
+            const categoryName = name.trim();
+
+            const existingCategory = await Category.findOne({
+                name: {
+                    $regex: `^${categoryName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+                    $options: "i",
+                },
+            });
+
+            if (existingCategory) {
+                return res.status(409).json({
+                    message: "This category already exists.",
+                });
+            }
+
+            const slug = categoryName
+                .toLowerCase()
+                .replace(/&/g, "and")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, "");
+                
+            console.log("Creating category:", categoryName);
+            console.log("MongoDB database:", mongoose.connection.name);
+
+            const category = await Category.create({
+                name: categoryName,
+                slug,
+                description: description || "",
+                icon: icon || "fa-tag",
+                image: image || "",
+                status: status === "Inactive" ? "Inactive" : "Active",
+            });
+
+            console.log("Category saved:", category._id, category.name);
+
+            return res.status(201).json({
+                message: "Category created successfully.",
+                category,
+            });
+        } catch (error) {
+            if (error.code === 11000) {
+                return res.status(409).json({
+                    message: "Category name or slug already exists.",
+                });
+            }
+
+            return res.status(500).json({
+                message: "Error creating category.",
+                error: error.message,
+            });
+        }
+    }
+);
+
+// Update Category (Admin Only)
+app.put(
+    "/api/categories/:id",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { name, description, icon, image, status } = req.body;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).json({
+                    message: "Invalid category ID.",
+                });
+            }
+
+            const category = await Category.findById(id);
+
+            if (!category) {
+                return res.status(404).json({
+                    message: "Category not found.",
+                });
+            }
+
+            if (name !== undefined) {
+                if (!name.trim()) {
+                    return res.status(400).json({
+                        message: "Category name is required.",
+                    });
+                }
+
+                const categoryName = name.trim();
+
+                const duplicate = await Category.findOne({
+                    _id: { $ne: id },
+                    name: {
+                        $regex: `^${categoryName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+                        $options: "i",
+                    },
+                });
+
+                if (duplicate) {
+                    return res.status(409).json({
+                        message: "This category name already exists.",
+                    });
+                }
+
+                category.name = categoryName;
+                category.slug = categoryName
+                    .toLowerCase()
+                    .replace(/&/g, "and")
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-|-$/g, "");
+            }
+
+            if (description !== undefined) {
+                category.description = description;
+            }
+
+            if (icon !== undefined) {
+                category.icon = icon;
+            }
+
+            if (image !== undefined) {
+                category.image = image;
+            }
+
+            if (status !== undefined) {
+                if (!["Active", "Inactive"].includes(status)) {
+                    return res.status(400).json({
+                        message: "Invalid category status.",
+                    });
+                }
+
+                category.status = status;
+            }
+
+            await category.save();
+
+            return res.json({
+                message: "Category updated successfully.",
+                category,
+            });
+        } catch (error) {
+            if (error.code === 11000) {
+                return res.status(409).json({
+                    message: "Category name or slug already exists.",
+                });
+            }
+
+            return res.status(500).json({
+                message: "Error updating category.",
+                error: error.message,
+            });
+        }
+    }
+);
+
+// Delete Category (Admin Only)
+app.delete(
+    "/api/categories/:id",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).json({
+                    message: "Invalid category ID.",
+                });
+            }
+
+            const category = await Category.findById(id);
+
+            if (!category) {
+                return res.status(404).json({
+                    message: "Category not found.",
+                });
+            }
+
+            await Category.findByIdAndDelete(id);
+
+            return res.json({
+                message: "Category deleted successfully.",
+            });
+        } catch (error) {
+            return res.status(500).json({
+                message: "Error deleting category.",
+                error: error.message,
+            });
+        }
+    }
+);
+
 
 
 // Create Product with Image Upload
@@ -2098,7 +2341,7 @@ app.get("/api/admin/customers", authMiddleware, async (req, res) => {
             .lean();
 
         console.log("Customers fetched:", customers.length);
-        
+
         const customerIds = customers.map((customer) => customer._id);
 
         // Calculate each customer's order count and total spending

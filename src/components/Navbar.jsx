@@ -19,6 +19,7 @@ function Navbar() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [search, setSearch] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [allCategoryMenu, setAllCategoryMenu] = useState([]);
   // Search products
   const [searchResults, setSearchResults] = useState([]);
 
@@ -117,24 +118,53 @@ function Navbar() {
   ];
 
   // All Categories — Blue Menu
-  const allCategoryMenu = [
-    { name: "Electronics", icon: "fa-tv" },
-    { name: "Sports", icon: "fa-futbol" },
-    { name: "Accessories", icon: "fa-headphones" },
-    { name: "Fashion", icon: "fa-shirt" },
-    { name: "Beauty", icon: "fa-spa" },
-    { name: "Furniture", icon: "fa-couch" },
-    { name: "Meats & Seafood", icon: "fa-fish" },
-    { name: "Pet Shop", icon: "fa-paw" },
-    { name: "Milk & Dairy Products", icon: "fa-bottle-water" },
-    { name: "Wines & Soft Drinks", icon: "fa-wine-glass" },
-    { name: "Grocery & Staples", icon: "fa-basket-shopping" },
-    { name: "Biscuits & Snacks", icon: "fa-cookie-bite" },
-    { name: "Frozen Foods", icon: "fa-snowflake" },
-    { name: "Daily Breakfast", icon: "fa-bread-slice" },
-    { name: "Beverages", icon: "fa-glass-water" },
-    { name: "Vegetables & Fruits", icon: "fa-apple-whole" },
-  ];
+  
+
+  useEffect(() => {
+    const fetchAllCategories = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/categories");
+
+        if (!response.ok) {
+          throw new Error("Failed to load categories");
+        }
+
+        const data = await response.json();
+
+        const iconMap = {
+          electronics: "fa-tv",
+          sports: "fa-futbol",
+          accessories: "fa-headphones",
+          fashion: "fa-shirt",
+          beauty: "fa-spa",
+          furniture: "fa-couch",
+          "meats & seafood": "fa-fish",
+          "pet shop": "fa-paw",
+          "milk & dairy products": "fa-bottle-water",
+          "wines & soft drinks": "fa-wine-glass",
+          "grocery & staples": "fa-basket-shopping",
+          "biscuits & snacks": "fa-cookie-bite",
+          "frozen foods": "fa-snowflake",
+          "daily breakfast": "fa-bread-slice",
+          beverages: "fa-glass-water",
+          "vegetables & fruits": "fa-apple-whole",
+          "toy's & gifts": "fa-gift",
+        };
+
+        const formattedCategories = data.map((category) => ({
+          name: category.name,
+          icon:
+            iconMap[category.name.toLowerCase()] || category.icon || "fa-tag",
+        }));
+
+        setAllCategoryMenu(formattedCategories);
+      } catch (error) {
+        console.error("Error loading All Categories menu:", error);
+      }
+    };
+
+    fetchAllCategories();
+  }, []);
 
   // Top category select
   const categories = [
