@@ -135,11 +135,30 @@ app.get(
     adminMiddleware,
     async (req, res) => {
         try {
-            const categories = await Category.find().sort({
-                createdAt: -1,
+            const categories = await Category.find()
+                .sort({ createdAt: -1 })
+                .lean();
+
+            const products = await Product.find({}, "categories").lean();
+
+            const categoriesWithProductCount = categories.map((category) => {
+                const productCount = products.filter(
+                    (product) =>
+                        Array.isArray(product.categories) &&
+                        product.categories.some(
+                            (productCategory) =>
+                                String(productCategory).trim().toLowerCase() ===
+                                String(category.name).trim().toLowerCase()
+                        )
+                ).length;
+
+                return {
+                    ...category,
+                    products: productCount,
+                };
             });
 
-            res.json(categories);
+            res.json(categoriesWithProductCount);
         } catch (error) {
             res.status(500).json({
                 message: "Error fetching admin categories",
@@ -154,6 +173,7 @@ app.post(
     "/api/categories",
     authMiddleware,
     adminMiddleware,
+    upload.single("image"),
     async (req, res) => {
         try {
             const { name, description, icon, image, status } = req.body;
@@ -184,7 +204,7 @@ app.post(
                 .replace(/&/g, "and")
                 .replace(/[^a-z0-9]+/g, "-")
                 .replace(/^-|-$/g, "");
-                
+
             console.log("Creating category:", categoryName);
             console.log("MongoDB database:", mongoose.connection.name);
 
@@ -193,7 +213,7 @@ app.post(
                 slug,
                 description: description || "",
                 icon: icon || "fa-tag",
-                image: image || "",
+                image: req.file ? `/uploads/${req.file.filename}` : (image || ""),
                 status: status === "Inactive" ? "Inactive" : "Active",
             });
 
@@ -223,10 +243,14 @@ app.put(
     "/api/categories/:id",
     authMiddleware,
     adminMiddleware,
+    upload.single("image"),
     async (req, res) => {
         try {
             const { id } = req.params;
             const { name, description, icon, image, status } = req.body;
+
+            console.log("CATEGORY UPDATE BODY:", req.body);
+            console.log("CATEGORY UPLOADED FILE:", req.file);
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({
@@ -277,8 +301,10 @@ app.put(
                 category.description = description;
             }
 
-            if (icon !== undefined) {
-                category.icon = icon;
+            if (req.file) {
+                category.image = `/uploads/${req.file.filename}`;
+            } else if (image !== undefined && !image.startsWith("blob:")) {
+                category.image = image;
             }
 
             if (image !== undefined) {
@@ -315,6 +341,51 @@ app.put(
         }
     }
 );
+
+
+// Bulk Delete Categories
+app.delete(
+    "/api/categories/bulk-delete",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const { ids } = req.body;
+
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return res.status(400).json({
+                    message: "Please provide category IDs to delete.",
+                });
+            }
+
+            const invalidIds = ids.some(
+                (id) => !mongoose.Types.ObjectId.isValid(id)
+            );
+
+            if (invalidIds) {
+                return res.status(400).json({
+                    message: "One or more category IDs are invalid.",
+                });
+            }
+
+            const result = await Category.deleteMany({
+                _id: { $in: ids },
+            });
+
+            return res.json({
+                message: `${result.deletedCount} categories deleted successfully.`,
+                deletedCount: result.deletedCount,
+            });
+        } catch (error) {
+            console.error("Bulk delete categories error:", error);
+
+            return res.status(500).json({
+                message: "Error deleting categories.",
+            });
+        }
+    }
+);
+
 
 // Delete Category (Admin Only)
 app.delete(

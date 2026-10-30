@@ -186,7 +186,11 @@ function createSlug(value) {
 function formatDate(date) {
   if (!date) return "—";
 
-  return new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", {
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) return "—";
+
+  return parsedDate.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -442,7 +446,14 @@ function CategoryModal({ editingCategory, categories, onClose, onSave }) {
             >
               {form.image ? (
                 <img
-                  src={form.image}
+                  src={
+                    form.image?.startsWith("blob:") ||
+                    form.image?.startsWith("data:")
+                      ? form.image
+                      : form.image?.startsWith("/uploads/")
+                        ? `http://localhost:5000${form.image}`
+                        : form.image
+                  }
                   alt="Category preview"
                   className="mb-3 h-24 w-full object-contain"
                 />
@@ -733,16 +744,26 @@ export default function AdminCategories() {
         ? `http://localhost:5000/api/categories/${editingCategory.id}`
         : "http://localhost:5000/api/categories";
 
+      const formData = new FormData();
+
+      formData.append("name", form.name || "");
+      formData.append("slug", form.slug || "");
+      formData.append("description", form.description || "");
+      formData.append("icon", form.icon || "fa-tag");
+      formData.append("status", form.status || "Active");
+
+      if (form.imageFile instanceof File) {
+        formData.append("image", form.imageFile);
+      } else if (form.image && !form.image.startsWith("blob:")) {
+        formData.append("image", form.image);
+      }
+
       const response = await fetch(url, {
         method: isEditing ? "PUT" : "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...form,
-          status: form.status || "Active",
-        }),
+        body: formData,
       });
 
       const data = await response.json();
@@ -761,20 +782,49 @@ export default function AdminCategories() {
     }
   };
 
-  const deleteCategory = (category) => {
+  const deleteCategory = async (category) => {
     const confirmed = window.confirm(
-      `Delete "${category.name}" from this demo list?`,
+      `Are you sure you want to delete "${category.name}"?`,
     );
 
     if (!confirmed) return;
 
-    setCategories((previous) =>
-      previous.filter((item) => item.id !== category.id),
-    );
+    try {
+      const token = getAuthToken();
 
-    setSelectedIds((previous) => previous.filter((id) => id !== category.id));
+      if (!token) {
+        alert("Please log in again to manage categories.");
+        return;
+      }
+
+      const response = await fetch(
+        `http://localhost:5000/api/categories/${category.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete category.");
+      }
+
+      setCategories((previous) =>
+        previous.filter((item) => item.id !== category.id),
+      );
+
+      setSelectedIds((previous) => previous.filter((id) => id !== category.id));
+
+      alert("Category deleted successfully.");
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      alert(error.message || "Failed to delete category.");
+    }
   };
-
   const toggleSelected = (id) => {
     setSelectedIds((previous) =>
       previous.includes(id)
@@ -804,19 +854,44 @@ export default function AdminCategories() {
     }
   };
 
-  const bulkDelete = () => {
+  const bulkDelete = async () => {
     if (selectedIds.length === 0) return;
 
     const confirmed = window.confirm(
-      `Delete ${selectedIds.length} selected demo categories?`,
+      `Delete ${selectedIds.length} selected categories? This action cannot be undone.`,
     );
 
     if (!confirmed) return;
 
-    setCategories((previous) =>
-      previous.filter((category) => !selectedIds.includes(category.id)),
-    );
-    setSelectedIds([]);
+    try {
+      const token = getAuthToken();
+
+      const response = await fetch(
+        "http://localhost:5000/api/categories/bulk-delete",
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ ids: selectedIds }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete categories.");
+      }
+
+      await fetchCategories();
+      setSelectedIds([]);
+
+      alert(data.message || "Selected categories deleted successfully.");
+    } catch (error) {
+      console.error("Bulk delete error:", error);
+      alert(error.message || "Error deleting selected categories.");
+    }
   };
 
   return (
@@ -970,7 +1045,11 @@ export default function AdminCategories() {
                     <div className="flex h-12 w-14 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
                       {category.image ? (
                         <img
-                          src={category.image}
+                          src={
+                            category.image?.startsWith("/uploads/")
+                              ? `http://localhost:5000${category.image}`
+                              : category.image
+                          }
                           alt={category.name}
                           className="h-full w-full object-contain"
                           onError={(event) => {
