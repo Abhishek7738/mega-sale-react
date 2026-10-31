@@ -45,6 +45,7 @@ export default function ContactPage() {
     message: "",
   });
   const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState([]);
   const [feedback, setFeedback] = useState({
     type: "",
     message: "",
@@ -54,57 +55,111 @@ export default function ContactPage() {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
   };
+  const handleImageChange = (event) => {
+    const selectedFiles = Array.from(event.target.files || []);
 
-  const handleSubmit = async (event) => {
+    if (selectedFiles.length > 3) {
+      setFeedback({
+        type: "error",
+        message: "You can select a maximum of 3 images.",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    for (const file of selectedFiles) {
+      if (!allowedTypes.includes(file.type)) {
+        setFeedback({
+          type: "error",
+          message: "Only JPG, PNG, and WEBP images are allowed.",
+        });
+        event.target.value = "";
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        setFeedback({
+          type: "error",
+          message: "Each image must be 5 MB or smaller.",
+        });
+        event.target.value = "";
+        return;
+      }
+    }
+
+    setImages(selectedFiles);
+    setFeedback({ type: "", message: "" });
+  };
+
+  const removeImage = (indexToRemove) => {
+    setImages((currentImages) =>
+      currentImages.filter((_, index) => index !== indexToRemove),
+    );
+  };
+
+const handleSubmit = async (event) => {
     event.preventDefault();
 
     setLoading(true);
     setFeedback({ type: "", message: "" });
 
     try {
-      const response = await fetch("http://localhost:5000/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          subject: form.subject,
-          message: form.message,
-        }),
-      });
+        const formData = new FormData();
 
-      const data = await response.json();
+        formData.append("name", form.name);
+        formData.append("email", form.email);
+        formData.append("subject", form.subject);
+        formData.append("message", form.message);
 
-      if (!response.ok) {
-        throw new Error(data.message || "Unable to send your message.");
-      }
+        images.forEach((image) => {
+            formData.append("images", image);
+        });
 
-      setFeedback({
-        type: "success",
-        message:
-          data.message || "Your message has been submitted successfully!",
-      });
+        const response = await fetch("http://localhost:5000/api/contact", {
+            method: "POST",
+            body: formData,
+        });
 
-      setForm({
-        name: "",
-        email: "",
-        subject: "",
-        message: "",
-      });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Unable to send your message.");
+        }
+
+        setFeedback({
+            type: "success",
+            message:
+                data.message || "Your message has been submitted successfully!",
+        });
+
+        setForm({
+            name: "",
+            email: "",
+            subject: "",
+            message: "",
+        });
+
+        setImages([]);
+
+        const imageInput = document.getElementById("contact-images");
+        if (imageInput) {
+            imageInput.value = "";
+        }
     } catch (error) {
-      setFeedback({
-        type: "error",
-        message:
-          error.message === "Failed to fetch"
-            ? "Cannot connect to the server. Please check that the backend is running."
-            : error.message || "Something went wrong. Please try again.",
-      });
+        setFeedback({
+            type: "error",
+            message:
+                error.message === "Failed to fetch"
+                    ? "Cannot connect to the server. Please check that the backend is running."
+                    : error.message || "Something went wrong. Please try again.",
+        });
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
+
 
   return (
     <main className="contact-page overflow-hidden text-slate-800">
@@ -316,6 +371,59 @@ export default function ContactPage() {
                     required
                   />
                 </div>
+              </div>
+
+              {/* Image Attachments */}
+              <div>
+                <label
+                  htmlFor="contact-images"
+                  className="mb-2 block text-sm font-semibold"
+                >
+                  Attach Images{" "}
+                  <span className="text-slate-400">(Optional)</span>
+                </label>
+
+                <input
+                  id="contact-images"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={handleImageChange}
+                  className="block w-full rounded-xl border border-slate-200 bg-white p-3 text-sm"
+                />
+
+                <p className="mt-2 text-xs text-slate-500">
+                  JPG, PNG or WEBP. Maximum 3 images, 5 MB per image.
+                </p>
+
+                {images.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {images.map((file, index) => (
+                      <div
+                        key={`${file.name}-${index}`}
+                        className="overflow-hidden rounded-xl border border-slate-200 bg-white p-2"
+                      >
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Selected attachment ${index + 1}`}
+                          className="h-28 w-full rounded-lg object-cover"
+                        />
+
+                        <p className="mt-2 truncate text-xs text-slate-600">
+                          {file.name}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="mt-2 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center">

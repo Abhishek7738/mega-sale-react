@@ -57,6 +57,29 @@ const upload = multer({
         }
     },
 });
+
+// Contact form image upload configuration
+const contactUpload = multer({
+    storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024,
+        files: 3,
+    },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+        ];
+
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only JPG, PNG, and WEBP images are allowed."));
+        }
+    },
+});
+
 app.use("/uploads", express.static(uploadDir));
 
 
@@ -2109,63 +2132,173 @@ app.delete(
 
 
 /* Contact Form API */
-app.post("/api/contact", async (req, res) => {
-    try {
-        const { name, email, subject, message } = req.body;
+app.post("/api/contact", (req, res) => {
+    contactUpload.array("images", 3)(req, res, async (uploadError) => {
+        if (uploadError) {
+            if (req.files?.length) {
+                req.files.forEach((file) => {
+                    fs.unlink(file.path, () => { });
+                });
+            }
 
-        // Validate required fields
-        if (
-            !name?.trim() ||
-            !email?.trim() ||
-            !subject?.trim() ||
-            !message?.trim()
-        ) {
+            if (uploadError instanceof multer.MulterError) {
+                const message =
+                    uploadError.code === "LIMIT_FILE_SIZE"
+                        ? "Each image must be 5 MB or smaller."
+                        : uploadError.code === "LIMIT_FILE_COUNT"
+                            ? "You can upload a maximum of 3 images."
+                            : "Unable to upload images.";
+
+                return res.status(400).json({ message });
+            }
+
             return res.status(400).json({
-                message: "Please fill in all required fields.",
+                message: uploadError.message || "Invalid image upload.",
             });
         }
 
-        // Validate field lengths
-        if (
-            name.trim().length > 100 ||
-            email.trim().length > 254 ||
-            subject.trim().length > 150 ||
-            message.trim().length > 5000
-        ) {
-            return res.status(400).json({
-                message: "One or more fields exceed the allowed length.",
+        const uploadedFiles = req.files || [];
+
+        try {
+            const { name, email, subject, message } = req.body;
+
+            // Validate required fields
+            if (
+                typeof name !== "string" ||
+                typeof email !== "string" ||
+                typeof subject !== "string" ||
+                typeof message !== "string" ||
+                !name.trim() ||
+                !email.trim() ||
+                !subject.trim() ||
+                !message.trim()
+            ) {
+                return res.status(400).json({
+                    message: "Please fill in all required fields.",
+                });
+            }
+
+            // Validate field lengths
+            if (
+                name.trim().length > 100 ||
+                email.trim().length > 254 ||
+                subject.trim().length > 150 ||
+                message.trim().length > 5000
+            ) {
+                return res.status(400).json({
+                    message: "One or more fields exceed the allowed length.",
+                });
+            }
+
+            // Validate email format
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!emailPattern.test(email.trim())) {
+                return res.status(400).json({
+                    message: "Please enter a valid email address.",
+                });
+            }
+
+            // Save contact message and image details in MongoDB
+            const contact = await Contact.create({
+                name: name.trim(),
+                email: email.trim().toLowerCase(),
+                subject: subject.trim(),
+                message: message.trim(),
+                attachments: uploadedFiles.map((file) => ({
+                    filename: file.filename,
+                    path: `/uploads/${file.filename}`,
+                    mimetype: file.mimetype,
+                })),
+            });
+
+            return res.status(201).json({
+                message: "Your message has been submitted successfully!",
+                contactId: contact._id,
+            });
+        } catch (error) {
+            console.error("Contact form error:", error);
+
+            // Remove uploaded files if saving the contact fails
+            uploadedFiles.forEach((file) => {
+                fs.unlink(file.path, () => { });
+            });
+
+            return res.status(500).json({
+                message: "Unable to submit your message. Please try again later.",
             });
         }
-
-        // Basic email format validation
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (!emailPattern.test(email.trim())) {
-            return res.status(400).json({
-                message: "Please enter a valid email address.",
-            });
-        }
-
-        // Save contact message in MongoDB
-        const contact = await Contact.create({
-            name: name.trim(),
-            email: email.trim().toLowerCase(),
-            subject: subject.trim(),
-            message: message.trim(),
-        });
-
-        return res.status(201).json({
-            message: "Your message has been submitted successfully!",
-            contactId: contact._id,
-        });
-    } catch (error) {
-        console.error("Contact form error:", error);
-
-        return res.status(500).json({
-            message: "Unable to submit your message. Please try again later.",
-        });
-    }
+    });
 });
+
+// Get all contact messages (Admin only)
+app.get(
+    "/api/admin/contacts",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const contacts = await Contact.find()
+                .sort({ createdAt: -1 })
+                .lean();
+
+            return res.status(200).json(contacts);
+        } catch (error) {
+            console.error("Fetch contact messages error:", error);
+
+            return res.status(500).json({
+                message: "Unable to fetch contact messages.",
+            });
+        }
+    }
+);
+
+// Update contact message status (Admin only)
+app.patch(
+    "/api/admin/contacts/:id/status",
+    authMiddleware,
+    adminMiddleware,
+    async (req, res) => {
+        try {
+            const { status } = req.body;
+
+            if (!["new", "read", "resolved"].includes(status)) {
+                return res.status(400).json({
+                    message: "Invalid contact message status.",
+                });
+            }
+
+            const contact = await Contact.findByIdAndUpdate(
+                req.params.id,
+                { status },
+                { new: true, runValidators: true }
+            );
+
+            if (!contact) {
+                return res.status(404).json({
+                    message: "Contact message not found.",
+                });
+            }
+
+            return res.status(200).json({
+                message: "Contact message status updated.",
+                contact,
+            });
+        } catch (error) {
+            console.error("Update contact status error:", error);
+
+            if (error.name === "CastError") {
+                return res.status(400).json({
+                    message: "Invalid contact message ID.",
+                });
+            }
+
+            return res.status(500).json({
+                message: "Unable to update contact message status.",
+            });
+        }
+    }
+);
 
 
 app.get(

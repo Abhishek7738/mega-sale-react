@@ -55,6 +55,7 @@ import AdminOrders from "./Pages/Admin/AdminOrders";
 import AdminInventory from "./Pages/Admin/AdminInventory";
 import AdminCustomers from "./Pages/Admin/AdminCustomers";
 import AdminCategories from "./Pages/Admin/AdminCategories";
+import AdminContactMessages from "./Pages/Admin/AdminContactMessages";
 import Premium from "./Pages/Premium";
 import NewLaunch from "./Pages/NewLaunch";
 
@@ -143,6 +144,7 @@ function App() {
                 <Route path="inventory" element={<AdminInventory />} />
                 <Route path="customers" element={<AdminCustomers />} />
                 <Route path="categories" element={<AdminCategories />} />
+                <Route path="contacts" element={<AdminContactMessages />} />
               </Route>
 
               {/* Existing customer website routes */}

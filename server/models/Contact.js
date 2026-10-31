@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const contactSchema = new mongoose.Schema(
@@ -28,6 +27,46 @@ const contactSchema = new mongoose.Schema(
       trim: true,
       maxlength: 5000,
     },
+
+    // Customer uploaded product photos
+    attachments: [
+      {
+        filename: {
+          type: String,
+          trim: true,
+        },
+        path: {
+          type: String,
+          trim: true,
+        },
+        mimetype: {
+          type: String,
+          trim: true,
+        },
+      },
+    ],
+
+    // Admin email replies ka history
+    replies: [
+      {
+        message: {
+          type: String,
+          required: true,
+          trim: true,
+          maxlength: 5000,
+        },
+        adminEmail: {
+          type: String,
+          trim: true,
+          lowercase: true,
+        },
+        sentAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
     status: {
       type: String,
       enum: ["new", "read", "resolved"],
